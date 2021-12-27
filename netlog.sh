@@ -12,7 +12,7 @@ set -e
 set -o errtrace
 set -E -o functrace
 
-ver=2021122501
+ver=2021122701
 
 sudo mount -o remount,rw / 
 printf '\e[9;1t'
