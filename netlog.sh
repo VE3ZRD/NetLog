@@ -144,28 +144,14 @@ function getysf(){
 function getserver(){
 	Addr=$(sed -n -r "/^\[DMR Network\]/ { :l /^Address[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/mmdvmhost)
 	DMRen=$(sed -n -r "/^\[DMR\]/ { :l /^Enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/mmdvmhost)
-	if [ $? != 0 ]; then
-  		echo "Sed Error on Line $LINENO"
-	fi
-
-	if [ "$mode" == "YSF" ]; then
-  		getysf
-	fi
 
 	if [ $Addr = "127.0.0.1" ] && [ "$DMRen" = "1" ]; then
 		fg=$(ls /var/log/pi-star/DMRGateway* | tail -n1)
 		NetNum=$(tail -n1 "$fg" | cut -d " " -f 6)
 		server=$(sed -n -r "/^\[DMR Network "${NetNum##*( )}"\]/ { :l /^Name[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/dmrgateway)
-	
-		if [ $? != 0 ]; then
-  			echo "Sed Error on Line $LINENO"	
-		else
-			ms=$(sudo sed -n '/^[^#]*'"$Addr"'/p' /usr/local/etc/DMR_Hosts.txt | head -n1 | sed -E "s/[[:space:]]+/|/g" | cut -d'|' -f1)
-			if [ $? != 0 ]; then
-  				echo "Sed Error on Line $LINENO"
-			fi
- 			server=$(echo "$ms" | cut -d " " -f1)
-		fi
+         else	
+		ms=$(sudo sed -n '/^[^#]*'"$Addr"'/p' /usr/local/etc/DMR_Hosts.txt | head -n1 | sed -E "s/[[:space:]]+/|/g" | cut -d'|' -f1)
+ 		server=$(echo "$ms" | cut -d " " -f1)
 	fi
 }
 
@@ -236,6 +222,15 @@ function ProcessNewCall(){
  
 	fi
 
+	if [ "$pmode" == "DMRA" ]; then
+		getserver
+        fi
+
+	if [ "$pmode" == "YSFA" ]; then
+		getysf
+        fi
+
+
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]; then
 
 		if [ "$call" == "$netcont" ]; then
@@ -261,21 +256,17 @@ function ProcessNewCall(){
 			if [ "$lastcall2" != "$call" ]; then
 			#	dur=$(printf "%1.0f\n" $durt)
 				if [ $dur -lt 2 ]; then
-					tput el 1
-					tput el
 
 					if [ "$callstat" == "New" ]; then
 						printf '\e[0;40m'
 						printf '\e[1;36m'
 						cnt=$((cnt+1))
-						tput rmam
-						if [ "$rf" == 1 ]; then
-							printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "Dur: $durt sec"  "BER: $ber" "RF: " "$server" "$tg"		
-						else
-							printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"
-						fi
+#						if [ "$rf" == 1 ]; then
+#printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "Dur: $durt sec"  "BER: $ber" "RF: " "$server" "$tg"		
+#						else
+printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"
+#						fi
 						printf '\e[0m'
-						tput smam
 						Logit
 					fi
 				
@@ -290,11 +281,11 @@ function ProcessNewCall(){
 						fi
 						cnt2d=$(echo "$cnt2ds" | head -n1 | cut -d "," -f 1)
 
-						if [ "$rf" == 1 ]; then
-							printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "Dur: $durt sec"  "RF: BER: $ber " "$server" "$tg"	
-						else
-							printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl " "$server" "$tg"	
-						fi	
+#						if [ "$rf" == 1 ]; then
+#printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "Dur:$durt sec"  "RF: BER:$ber" "$server" "$tg"	
+#						else
+printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur:$durt sec" "PL:$pl" "$server" "$tg"	
+#						fi	
 						printf '\e[0m'
 					fi
 
@@ -309,18 +300,18 @@ function ProcessNewCall(){
 						if [ active == 1 ]; then
 							tput cuu 1
 						fi
-						tput el 1
-						tput el
-						tput rmam
+#						tput el 1
+#						tput el
+#						tput rmam
 
 						if [ "$rf" == 1 ]; then
-							printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, $s  Dur:%s Secs, BER:%s RF: TG:%s %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$ber" "$server" "$tg"	
+printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, $s  Dur:%s Secs, BER:%s RF: TG:%s %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$ber" "$server" "$tg"	
 						else
 					    		if [ "$1" ]; then
 				#				tput cuu 2
-								printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
+printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 					    		else
-								printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg"	
+printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg"	
 					    		fi
 						fi
 						printf '\e[0m'
@@ -347,11 +338,11 @@ function ProcessNewCall(){
 						else			
 					    		if [ "$1" ]; then
 		#						tput cuu 2
-								printf " KeyBd Dup %-3s %-8s %-6s %s," "$cnt2d" "$Time" "$call" "$name"	
-								printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
+printf " KeyBd Dup %-3s %-8s %-6s %s,%s, %s, %s %s %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
+#printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
 					    		else
-								printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s," "$cnt2d" "$Time" "$call" "$name" "$city" "$state"	
-								printf "   %s, %s, %s %s %s \n" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
+printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
+#printf "   %s, %s, %s %s %s \n" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 					    		fi
 							printf '\e[0m'
 						fi
@@ -395,6 +386,7 @@ function ParseLine(){
 	if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ]; then
 		if [[ "$nline1" =~ "from" ]]; then
 			if [ "$mode" == "DMR" ]; then 
+				getserver
 				if [[ "$nline1" =~ "header" ]]; then
 					call=$(echo "$nline1" | cut -d" " -f 12)
 					tg=$(echo "$nline1" | cut -d" " -f 15)
