@@ -60,6 +60,7 @@ pmode=""
 mode=""
 server=""
 call=""
+line2=""
 
 err_report() { echo "Error on line $1 for call: $call" ./netlog.sh ReStart
 }
@@ -284,11 +285,9 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 						fi
 						cnt2d=$(echo "$cnt2ds" | head -n1 | cut -d "," -f 1)
 
-#						if [ "$rf" == 1 ]; then
-#printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "Dur:$durt sec"  "RF: BER:$ber" "$server" "$tg"	
-#						else
-printf "$mode KeyUp Dup %-3s %-8s %-6s %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" " D:$durt" "PL:$pl" "$server" "$tg"	
-#						fi	
+#printf "%s KeyUp Dup %-3s %-8s %-6s %s %s %s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" "$durt" "$server" "$tg"	
+#printf "%s KeyUp Dup %-3s %-8s %-6s %s $s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" 
+printf "%-3s $mode KeyUp Dup %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"
 						printf '\e[0m'
 					fi
 
@@ -381,9 +380,9 @@ printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d
 }
 
 function ParseLine(){
-	echo "Last Line : $nline1"
-	fdate=$(echo "$nline1" | cut -d " " -f2 |  sed 's/ *$//g')
-	ftime=$(echo "$nline1" | cut -d " " -f3 |  sed 's/ *$//g')
+#	echo "Last Line : $nline1"
+	fdate=$(echo "$nline1" | cut -d " " -f2 )    #| sed 's/ *$//g' 
+	ftime=$(echo "$nline1" | cut -d " " -f3 )
 	mode=$(echo "$nline1" | cut -d " " -f 4 | cut -c1-3)
 
 	if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ]; then
@@ -468,13 +467,13 @@ function ParseLine(){
 
 function GetLastLine(){
         f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
-        nline1=$(tail -n 1 "$f1" | tr -s \ )
+        line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
+	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
         newline="$nline1"
         mode=$(echo "$nline1" | cut -d " " -f 4 | cut -c1-3 )
 
         if [ "$oldline" != "$newline" ]; then
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ]; then
-echo "Newline"
                         ParseLine
                         ProcessNewCall
                 fi
