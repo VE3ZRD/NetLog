@@ -59,6 +59,7 @@ newline=""
 pmode=""
 mode=""
 server=""
+call=""
 
 err_report() { echo "Error on line $1 for call: $call" ./netlog.sh ReStart
 }
@@ -208,19 +209,10 @@ function Logit(){
 
 
 function ProcessNewCall(){ 
-#echo "Processing Call $call  Mode $pmode"
+#echo "Processing Call:$call Mode:$pmode"
 	getuserinfo 
 	checkcall 
-	getserver 
-#	if [[ $nline1 =~ "header" ]]; then
-	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ]; then
-                fdate=$(echo "$nline1" | cut -d " " -f2)
-
-                printf '\e[1;32m'
-
-		echo -en "    Active $mode QSO from $call $name, $country, $tg,  $server\r"
- 
-	fi
+#	getserver 
 
 	if [ "$pmode" == "DMRA" ]; then
 		getserver
@@ -231,12 +223,23 @@ function ProcessNewCall(){
         fi
 
 
+
+#	if [[ $nline1 =~ "header" ]]; then
+	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ]; then
+                fdate=$(echo "$nline1" | cut -d " " -f2)
+
+                printf '\e[1;32m'
+
+		echo -en "    Active $mode QSO from $call $name, $state, $country, $server : $tg\r"
+ 
+	fi
+
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]; then
 
 		if [ "$call" == "$netcont" ]; then
 			sudo mount -o remount,rw /
 
-			tput rmam
+#			tput rmam
 			printf '\e[1;34m'		
 			if [ "$rf" == 1 ]; then
 				printf " -------------------- $mode $Time  Net Control $netcont $name BER:$ber  $tg,   $server\n"
@@ -284,7 +287,7 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 #						if [ "$rf" == 1 ]; then
 #printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "Dur:$durt sec"  "RF: BER:$ber" "$server" "$tg"	
 #						else
-printf "$mode KeyUp Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur:$durt sec" "PL:$pl" "$server" "$tg"	
+printf "$mode KeyUp Dup %-3s %-8s %-6s %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" " D:$durt" "PL:$pl" "$server" "$tg"	
 #						fi	
 						printf '\e[0m'
 					fi
@@ -369,16 +372,16 @@ printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d
 #		checkcall
 		if [ "$callstat" == "New" ]; then
 			cnt=$((cnt+1))
-			printf "00 - %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			printf "00 - New %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
 		fi	
 		if [ "$callstat" == "Dup" ]; then
-			printf "00 - New %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			printf "00 - Dup  %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
 		fi	
 	fi
 }
 
 function ParseLine(){
-#	echo "Last Line : $nline1"
+	echo "Last Line : $nline1"
 	fdate=$(echo "$nline1" | cut -d " " -f2 |  sed 's/ *$//g')
 	ftime=$(echo "$nline1" | cut -d " " -f3 |  sed 's/ *$//g')
 	mode=$(echo "$nline1" | cut -d " " -f 4 | cut -c1-3)
@@ -386,7 +389,6 @@ function ParseLine(){
 	if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ]; then
 		if [[ "$nline1" =~ "from" ]]; then
 			if [ "$mode" == "DMR" ]; then 
-				getserver
 				if [[ "$nline1" =~ "header" ]]; then
 					call=$(echo "$nline1" | cut -d" " -f 12)
 					tg=$(echo "$nline1" | cut -d" " -f 15)
@@ -401,16 +403,6 @@ function ParseLine(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="DMRT"
 				fi
-				if [[ "$nline1" =~ "watchdog" ]]; then
-					pl=$(echo "$nline1" | cut -d" " -f 13)
-					pmode="DMRW"
-					durt=$(echo "$nline1" | cut -d" " -f 11)
-					dur=$(printf "%1.0f\n" $durt)
-					cnt=$((cnt+1))
-					pmode="DMRW"
-					cm=5
-					Logit
-  				fi
 			fi
 			if [ "$mode" == "YSF" ]; then 
 				if [[ "$nline1" =~ "data from" ]]; then
@@ -427,13 +419,7 @@ function ParseLine(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="YSFT"
 				fi
-				if [[ "$nline1" =~ "watchdog" ]]; then
-					pl=$(echo "$nline1" | cut -d " " -f 11)
-					ber=$(echo "$nline1" | cut -d " " -f 15)
-					durt=$(echo "$nline1" | cut -d " " -f 9)
-					dur=$(printf "%1.0f\n" $durt)
-					pmode="Watchdog"
-				fi
+
 			fi
 			if [ "$mode" == "P25" ]; then 
 				if [[ "$nline1" =~ "received network" ]]; then
@@ -450,16 +436,32 @@ function ParseLine(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="P25T"
 				fi
-				if [[ "$nline1" =~ "watchdog" ]]; then
+
+			fi
+		fi
+		if [[ "$nline1" =~ "watchdog" ]] && [ "$mode" == "YSF" ]; then
+					pl=$(echo "$nline1" | cut -d " " -f 11)
+					ber=$(echo "$nline1" | cut -d " " -f 15)
+					durt=$(echo "$nline1" | cut -d " " -f 9)
+					dur=$(printf "%1.0f\n" $durt)
+					pmode="Watchdog"
+		fi
+
+		if [[ "$nline1" =~ "watchdog" ]] && [ "$mode" == "P25" ]; then
 					pl=$(echo "$nline1" | cut -d " " -f 12)
 					ber=$(echo "$nline1" | cut -d " " -f 16)
 					durt=$(echo "$nline1" | cut -d " " -f 10)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="Watchdog"
-				fi
-
-			fi
 		fi
+		if [[ "$nline1" =~ "watchdog" ]] && [ "$mode" == "DMR" ]; then
+					pl=$(echo "$nline1" | cut -d" " -f 13)
+					pmode="DMRW"
+					durt=$(echo "$nline1" | cut -d" " -f 11)
+					dur=$(printf "%1.0f\n" $durt)
+					cnt=$((cnt+1))
+					pmode="Watchdog"
+  		fi
 
 	fi
 }
@@ -472,6 +474,7 @@ function GetLastLine(){
 
         if [ "$oldline" != "$newline" ]; then
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ]; then
+echo "Newline"
                         ParseLine
                         ProcessNewCall
                 fi
