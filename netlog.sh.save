@@ -393,7 +393,7 @@ function ParseLine(){
 #	echo "Last Line : $nline1"
 	fdate=$(echo "$nline1" | cut -d " " -f2 )    #| sed 's/ *$//g' 
 	ftime=$(echo "$nline1" | cut -d " " -f3 )
-#	mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/,//g')
+	mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/,//g')
 
 	if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
 		if [[ "$nline1" =~ "from" ]]; then
@@ -413,9 +413,8 @@ function ParseLine(){
 					pmode="DMRT"
 				fi
 			fi
-
 			if [ "$mode" == "YSF" ]; then 
-				if [[ "$nline1" =~ "header from" ]]; then
+				if [[ "$nline1" =~ "data from" ]]; then
 					call=$(echo "$nline1" | cut -d " " -f 9)
 			#		echo "Call=$call"
 					tg="n/a"
@@ -423,20 +422,11 @@ function ParseLine(){
 				fi
 
 				if [[ "$nline1" =~ "end of transmission" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 11)
-					ber=$(echo "$nline1" | cut -d " " -f 18)
-				#	pl=$(echo "$nline1" | cut -d " " -f 17)
+					ber=$(echo "$nline1" | cut -d " " -f 21)
+					pl=$(echo "$nline1" | cut -d " " -f 17)
 					durt=$(echo "$nline1" | cut -d " " -f 15)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="YSFT"
-				fi
-
-				if [[ "$nline1" =~ "transmission lost" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 8)
-					ber=$(echo "$nline1" | cut -d " " -f 15)
-					durt=$(echo "$nline1" | cut -d " " -f 11)
-					dur=$(printf "%1.0f\n" $durt)
-					pmode="YSFW"
 				fi
 
 			fi
@@ -457,6 +447,8 @@ function ParseLine(){
 				fi
 
 			fi
+#M: 2021-12-28 18:53:40.269 NXDN, received network transmission from VE3RD to TG 65000
+#M: 2021-12-28 18:53:41.837 NXDN, received network end of transmission from VE3RD to TG 65000, 1.7 seconds
 
 
 			if [ "$mode" == "NXDN" ]; then 
@@ -466,7 +458,7 @@ function ParseLine(){
 					pmode="NXDNA"
 				fi
 				if [[ "$nline1" =~ "end of transmission" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 11)
+	#				call=$(echo "$nline1" | cut -d " " -f 10)
 					tg=$(echo "$nline1" | cut -d " " -f 14)
 					durt=$(echo "$nline1" | cut -d " " -f 15)
 					dur=$(printf "%1.0f\n" $durt)
@@ -507,8 +499,11 @@ function GetLastLine(){
         line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
 	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
         newline="$nline1"
-        mode=$(echo "$nline1" | cut -d " " -f 4 ||  sed 's/-ND//')
+        mode=$(echo "$nline1" | cut -d " " -f 4)
        
+#M: 2021-12-28 18:53:40.269 NXDN, received network transmission from VE3RD to TG 65000
+#M: 2021-12-28 18:53:41.837 NXDN, received network end of transmission from VE3RD to TG 65000, 1.7 seconds
+
         if [ "$oldline" != "$newline" ]; then
 #echo "$nline1"
 #echo "Mode = $mode"
