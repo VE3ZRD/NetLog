@@ -164,7 +164,7 @@ function getserver(){
 }
 
 function getuserinfo(){
-	if [ "$cm" != 6 ] && [ ! -z  "$call" ]; then
+	if [ "$cm" != 6 ] && [ ! -z  "$call" ] && [ "$call" != "to" ]; then
 		call=$(echo "$call" | cut -d "/" -f 1)
 		call=$(echo "$call" | cut -d "-" -f 1)
 if [ $call ]; then
@@ -192,7 +192,7 @@ fi
 }
 
 function checkcall(){ 
-		if [ "$cm" != 6 ]; then 
+		if [ "$cm" != 6 ] && [ "$call" != "to" ]; then 
 			logline=$(sed -n '/'"$call"',/p' /home/pi-star/netlog.log) 
 			if [ $? != 0 ]; then
   				echo "Sed Error on Line $LINENO"
@@ -532,7 +532,9 @@ function GetLastLine(){
 #echo "Mode = $mode"
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
 			ParseLine
-                        ProcessNewCall
+			if [ "$call" != "to" ]; then
+                        	ProcessNewCall
+			fi
                 fi
         fi
         oldline="$newline"
