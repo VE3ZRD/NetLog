@@ -527,13 +527,15 @@ function GetLastLine(){
         newline="$nline1"
         mode=$(echo "$nline1" | cut -d " " -f 4 ||  sed 's/-ND//')
 
-	tcall=$(echo "$nline1" | grep -oP '(?<=from )\w+')
     
         if [ "$oldline" != "$newline" ] && [ "$tcall" != "to" ]; then
 
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
-			ParseLine
-                        ProcessNewCall
+			tcall=$(echo "$nline1" | grep -oP '(?<=from )\w+')
+			if [ "$tcall" != "to" ]; then
+				ParseLine
+                        	ProcessNewCall
+			fi
                 fi
         fi
         oldline="$newline"
