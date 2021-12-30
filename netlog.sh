@@ -61,6 +61,7 @@ mode=""
 server=""
 call=""
 line2=""
+yat=""
 
 err_report() { echo "Error on line $1 for call: $call" ./netlog.sh ReStart
 }
@@ -134,9 +135,11 @@ function header(){
 		echo ""
 	fi
 }
-
+#M: 2021-12-29 14:55:46.923 YSF, received network data from WB2FLX     to DG-ID 0 at FCS00390
 function getysf(){
 	ysfm=$(sed -n -r "/^\[Network\]/ { :l /^Startup[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/ysfgateway)
+	server="$ysfm"
+	tg=$(echo "$nline1" | cut -d " " -f 14)
 	if [ "$ysfm" == "YSF2P25" ]; then
 		server="YSF2P25"
 		tg=$(sed -n -r "/^\[Network\]/ { :l /^Static[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/p25gateway)
@@ -162,6 +165,9 @@ function getserver(){
 
 function getuserinfo(){
 	if [ "$cm" != 6 ] && [ ! -z  "$call" ]; then
+		call=$(echo "$call" | cut -d "/" -f 1)
+		call=$(echo "$call" | cut -d "-" -f 1)
+if [ $call ]; then
  		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped.csv)	
 		if [ $? != 0 ]; then
   			echo "Sed Error on Line $LINENO" 
@@ -181,6 +187,7 @@ function getuserinfo(){
 			state=""
 			country=""
 		fi
+fi
 	fi
 }
 
@@ -214,6 +221,9 @@ function Logit(){
 
 function ProcessNewCall(){ 
 #echo "Processing Call:$call Mode:$pmode"
+if [ -z "$call" ]; then
+   call=" "
+fi
 	getuserinfo 
 	checkcall 
 #	getserver 
@@ -224,6 +234,7 @@ function ProcessNewCall(){
 
 	if [ "$pmode" == "YSFA" ]; then
 		getysf
+		tg="$yat"
         fi
 
 	if [ "$pmode" == "NXDNA" ]; then
@@ -381,16 +392,18 @@ printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d
 #		checkcall
 		if [ "$callstat" == "New" ]; then
 			cnt=$((cnt+1))
-			printf "00 - New %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			printf "New %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$cnt" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			Logit
 		fi 
 		if [ "$callstat" == "Dup" ]; then
-			printf "00 - Dup  %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			printf "Dup %s  %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s\n" "$cnt2d" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
 		fi	
 	fi
 }
 
 function ParseLine(){
 #	echo "Last Line : $nline1"
+tg=""
 	fdate=$(echo "$nline1" | cut -d " " -f2 )    #| sed 's/ *$//g' 
 	ftime=$(echo "$nline1" | cut -d " " -f3 )
 #	mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/,//g')
@@ -415,10 +428,13 @@ function ParseLine(){
 			fi
 
 			if [ "$mode" == "YSF" ]; then 
-				if [[ "$nline1" =~ "header from" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 9)
+				if [[ "$nline1" =~ "header from" ]] || [[ "$nline1" =~ "data from" ]]; then
+					call=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 1)
+					name=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 2)
 			#		echo "Call=$call"
-					tg="n/a"
+					yat=$(echo "$nline1" | cut -d " " -f 14)
+					tg="$yat"
+					server=""
 					pmode="YSFA"
 				fi
 
@@ -441,13 +457,14 @@ function ParseLine(){
 
 			fi
 			if [ "$mode" == "P25" ]; then 
+
 				if [[ "$nline1" =~ "received network" ]]; then
 					call=$(echo "$nline1" | cut -d " " -f 9)
 					tg=$(echo "$nline1" | cut -d " " -f 12)
 					pmode="P25A"
 				fi
 				if [[ "$nline1" =~ "end of transmission" ]]; then
-	#				call=$(echo "$nline1" | cut -d " " -f 10)
+					call=$(echo "$nline1" | cut -d " " -f 10)
 					tg=$(echo "$nline1" | cut -d " " -f 13)
 					pl=$(echo "$nline1" | cut -d " " -f 16)
 					ber=$(echo "$nline1" | cut -d " " -f 23)
@@ -472,7 +489,6 @@ function ParseLine(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="NXDNT"
 				fi
-
 			fi
 		fi
 		if [[ "$nline1" =~ "watchdog" ]] && [ "$mode" == "YSF" ]; then
@@ -482,11 +498,10 @@ function ParseLine(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="Watchdog"
 		fi
-
 		if [[ "$nline1" =~ "watchdog" ]] && [ "$mode" == "P25" ]; then
-					pl=$(echo "$nline1" | cut -d " " -f 12)
-					ber=$(echo "$nline1" | cut -d " " -f 16)
-					durt=$(echo "$nline1" | cut -d " " -f 10)
+					pl=$(echo "$nline1" | cut -d " " -f 11)
+					ber="0"
+					durt=$(echo "$nline1" | cut -d " " -f 9)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="Watchdog"
 		fi
@@ -500,6 +515,9 @@ function ParseLine(){
   		fi
 
 	fi
+if [ -z $pl ]; then
+  pl="0"
+fi
 }
 
 function GetLastLine(){
@@ -513,7 +531,7 @@ function GetLastLine(){
 #echo "$nline1"
 #echo "Mode = $mode"
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
-                        ParseLine
+			ParseLine
                         ProcessNewCall
                 fi
         fi
@@ -522,7 +540,11 @@ function GetLastLine(){
 
 function StartUp()
 {
-
+        f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
+        line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
+	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
+        newline="$nline1"
+	oldline="$newline"
 if [ "$netcont" != "ReStart" ]; then
 
 	if [ "$netcont" == "HELP" ]; then
