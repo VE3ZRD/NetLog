@@ -12,7 +12,7 @@ set -e
 set -o errtrace
 set -E -o functrace
 
-ver=2021122701
+ver=2021123001
 
 sudo mount -o remount,rw / 
 printf '\e[9;1t'
@@ -403,7 +403,7 @@ printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d
 
 function ParseLine(){
 #	echo "Last Line : $nline1"
-tg=""
+	tg=""
 	fdate=$(echo "$nline1" | cut -d " " -f2 )    #| sed 's/ *$//g' 
 	ftime=$(echo "$nline1" | cut -d " " -f3 )
 #	mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/,//g')
@@ -526,15 +526,14 @@ function GetLastLine(){
 	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
         newline="$nline1"
         mode=$(echo "$nline1" | cut -d " " -f 4 ||  sed 's/-ND//')
-       
-        if [ "$oldline" != "$newline" ]; then
-#echo "$nline1"
-#echo "Mode = $mode"
+
+	tcall=$(echo "$nline1" | grep -oP '(?<=from )\w+')
+    
+        if [ "$oldline" != "$newline" ] && [ "$tcall" != "to" ]; then
+
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
 			ParseLine
-			if [ "$call" != "to" ]; then
-                        	ProcessNewCall
-			fi
+                        ProcessNewCall
                 fi
         fi
         oldline="$newline"
