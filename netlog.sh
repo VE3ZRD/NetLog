@@ -320,8 +320,8 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s $s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" 
 #printf "%s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
 
-printf "%-4s KU Dup " "$mode"
-printf " %-3s -- %-8s" "$cnt2d" "$Time" 
+printf "%4s KU Dup " "$mode"
+printf " %4s %-8s" "$cnt2d" "$Time" 
 #printf "-- %-6s " "$call"
 printf " %-6s " "$call"
 
@@ -386,10 +386,10 @@ printf "%-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, T
 			
 				    		if [ "$1" ]; then
 		#						tput cuu 2
-printf " KeyBd Dup %-3s %-8s %-6s %s,%s, %s, %s %s %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
+printf "$mode KBd Dup %-4s %-8s %-6s %s,%s, %s, %s %s %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 #printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
 					    	else
-printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
+printf "$mode Net Dup  %-4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 #printf "   %s, %s, %s %s %s \n" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 					    	fi
 							printf '\e[0m'
