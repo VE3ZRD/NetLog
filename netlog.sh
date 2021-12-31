@@ -62,6 +62,7 @@ server=""
 call=""
 line2=""
 yat=""
+keybd="no"
 
 err_report() 
 { 
@@ -100,7 +101,8 @@ function getinput()
 	tput cuu 2
 	stty sane
 	cm=2
-	ProcessNewCall K
+	keybd="yes"
+	ProcessNewCall
 }
 
 
@@ -227,8 +229,13 @@ function Logit(){
 function ProcessNewCall(){ 
 #echo "Processing Call:$call Mode:$pmode"
 if [ -z "$call" ]; then
-   call=" "
+   call="VE3ZRD"
 fi
+if [ "$keybd" == "yes" ]; then
+	pmode="DMRT"    
+  	keybd="no"
+fi
+
 	getuserinfo 
 	checkcall 
 #	getserver 
@@ -306,11 +313,11 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 						if [ $? != 0 ]; then
  			 				echo "Sed Error on Line $LINENO"
 						fi
-						cnt2d=$(echo "$cnt2ds" | head -n1 | cut -d "," -f 1)
+						cnt2d=$(echo "$cnt2ds" | cut -d "," -f 1)
 
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s %s %s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" "$durt" "$server" "$tg"	
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s $s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" 
-printf "$mode KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"
+printf "$s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
 						printf '\e[0m'
 					fi
 
@@ -558,6 +565,7 @@ function StartUp()
 	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
         newline="$nline1"
 	oldline="$newline"
+
 if [ "$netcont" != "ReStart" ]; then
 
 	if [ "$netcont" == "HELP" ]; then
