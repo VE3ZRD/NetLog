@@ -317,7 +317,7 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s %s %s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" "$durt" "$server" "$tg"	
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s $s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" 
-printf "$s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+printf "%s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
 						printf '\e[0m'
 					fi
 
