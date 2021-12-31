@@ -241,7 +241,7 @@ fi
 	checkcall 
 #	getserver 
 
-	if [ "$pmode" == "DMRA" ]; then
+	if [ "$mode" == "DMR" ]; then
 		getserver
         fi
 
@@ -318,7 +318,18 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s %s %s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" "$durt" "$server" "$tg"	
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s $s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" 
-printf "%s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+#printf "%s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+
+printf "%-4s KU Dup " "$mode"
+printf " %-3s -- %-8s" "$cnt2d" "$Time" 
+#printf "-- %-6s " "$call"
+printf " %-6s " "$call"
+
+#printf "%-5s KU Dup %-3 %-8s -- %-6s" "$mode" "$cnt2d" "$Time" "$call"
+
+
+printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
+printf " Dur:%s, Pl:%s, Svr:%s, TG:%s\n" "$durt" "$pl" "$server" "$tg"
 			
 						printf '\e[0m'
 					fi
