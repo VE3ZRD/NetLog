@@ -63,7 +63,12 @@ call=""
 line2=""
 yat=""
 
-err_report() { echo "Error on line $1 for call: $call" ./netlog.sh ReStart
+err_report() 
+{ 
+	echo "Error on line $1"
+	echo "Last  Call = $call" 
+	echo "Last TCall = $tcall" 
+	./netlog.sh ReStart
 }
 
 trap 'err_report $LINENO' ERR
@@ -527,6 +532,7 @@ function GetLastLine(){
         newline="$nline1"
         mode=$(echo "$nline1" | cut -d " " -f 4 ||  sed 's/-ND//')
 
+tcal="VE3ZRD"
     
         if [ "$oldline" != "$newline" ] && [ "$tcall" != "to" ]; then
 
