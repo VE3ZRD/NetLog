@@ -531,8 +531,12 @@ function GetLastLine(){
         if [ "$oldline" != "$newline" ] && [ "$tcall" != "to" ]; then
 
                 if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
-			tcall=$(echo "$nline1" | grep -oP '(?<=from )\w+')
-			if [ "$tcall" != "to" ]; then
+
+#			tcall=$(echo "$nline1" | grep -oP '(?<=from)\w+')
+	
+			tcall=$(echo "$nline1" |  grep -oP '(?<=from )\w+(?= to)')
+
+		if [ ! -z "$tcall" ]; then
 				ParseLine
                         	ProcessNewCall
 			fi
