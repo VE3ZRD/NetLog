@@ -63,6 +63,7 @@ call=""
 line2=""
 yat=""
 keybd="no"
+amode="no"
 
 err_report() 
 { 
@@ -258,7 +259,7 @@ fi
 #	if [[ $nline1 =~ "header" ]]; then
 	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ] || [ "$pmode" == "NXDNA" ]; then
                 fdate=$(echo "$nline1" | cut -d " " -f2)
-
+		amode="yes"
                 printf '\e[1;32m'
 
 		echo -en "    Active $mode QSO from $call $name, $state, $country, $server : $tg\r"
@@ -266,7 +267,7 @@ fi
 	fi
 
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
-
+		amode="no"
 		if [ "$call" == "$netcont" ]; then
 			sudo mount -o remount,rw /
 
@@ -286,8 +287,8 @@ fi
 			lastcall1=""
 			call1=""
 			netcontdone=0
-			lastcall1=""
-			if [ "$lastcall2" != "$call" ]; then
+#			lastcall1=""
+#			if [ "$lastcall2" != "$call" ]; then
 			#	dur=$(printf "%1.0f\n" $durt)
 				if [ $dur -lt 2 ]; then
 
@@ -318,6 +319,7 @@ printf "%-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s\n" "
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s %s %s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" "$durt" "$server" "$tg"	
 #printf "%s KeyUp Dup %-3s %-8s %-6s %s $s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$state" "$country" 
 printf "%s KU Dup %-3 %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s %s\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+			
 						printf '\e[0m'
 					fi
 
@@ -386,8 +388,8 @@ printf "  $mode Net Dupe %-3s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s \n" "$cnt2d
 					fi
 			
 				fi  # end of keyup loop
-			fi   #end of lastcall2 loop
-				lastcall2="$call"
+	#		fi   #end of lastcall2 loop
+	#			lastcall2="$call"
 		fi  #end of not netcont loop
 
 		if [ active == 1 ]; then
@@ -538,6 +540,11 @@ function GetLastLine(){
 	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
         newline="$nline1"
         mode=$(echo "$nline1" | cut -d " " -f 4 ||  sed 's/-ND//')
+
+	if [[ "$nline1" =~ "end" ]] && [ "$amode" == "yes" ]; then
+			oldline=""
+			pmode="DMRT"
+	fi
 
 tcal="VE3ZRD"
     
