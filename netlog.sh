@@ -78,9 +78,6 @@ trap 'err_report $LINENO' ERR
 
 fnEXIT() {
 
- tput cuu1
- tput el
- tput el1 
   echo -e "${BOLD}${WHI}THANK YOU FOR USING NETLOG by VE3RD!${SGR0}${DEF}"
 echo ""
   exit
@@ -116,14 +113,11 @@ done
 }
 function getinput()
 {
-	tput el
-	tput el1
 	calli=" "
 	echo -n "Type a Call Sign and press enter: ";
 	read calli
 	call=${calli^^} 
 	echo ""
-	tput cuu 2
 	stty sane
 	cm=2
 	keybd="yes"
@@ -261,6 +255,8 @@ LTMAG="\e[95m"
 LTGREEN="\e[92m"
 LTCYAN="\e[96m"
 YELLOW="\e[33m"
+	
+stty sane
 
 ENDCOLOR="\e[0m"
 
@@ -298,21 +294,9 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
 	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ] || [ "$pmode" == "NXDNA" ]; then
                 fdate=$(echo "$nline1" | cut -d " " -f2)
 		amode="yes"
-#                printf '\e[1;32m'
-#		tput sc
-	#	echo -en "    Active $mode QSO from $call $name, $state, $country, $server : $tg\r"
-
 
 textstr=$(echo -en " ${YELLOW}   Active $mode QSO from $call $name, $state, $country, $server : $tg ${ENDCOLOR}\r")
 echo "$textstr"
-
-#printf '\033[<1>A'
-#echo -en "\[\033[<1>A"
-#		printf "    Active $mode QSO from $call $name, $state, $country, $server : $tg\n"
-#		printf "    Active $mode QSO from $call "
-#		printf "    Active $name, $state, $country, "
-#		printf "    Active $server : $tg\n"
-#		tput rc
 
 	echo -en "\033[1A\033"
 
@@ -326,8 +310,6 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 		if [ "$call" == "$netcont" ]; then
 			sudo mount -o remount,rw /
 
-#			tput rmam
-#			printf '\e[1;34m'		
 			if [ "$rf" == 1 ]; then
 				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name BER:$ber  $tg,   $server ${ENDCOLOR}\n"
 			else
@@ -389,21 +371,13 @@ echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev
 						cnt=$((cnt+1))
 #						printf '\e[0;40m'
 #						printf '\e[1;36m'
-						if [ active == 1 ]; then
-							tput cuu 1
-						fi
 
 					    	if [ "$1" ]; then
-#								tput cuu 2
 printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
 					    	else
 printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
 					    	
 						fi
-#						fi
-#						printf '\e[0m'
-				#		tput smam
-						#lcm=0
 						Logit
 echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
@@ -411,20 +385,8 @@ echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt >
 					if [ "$callstat" == "Dup" ] && [ "$nodupes" == 0 ]; then
 							## Write Duplicate Info to Screen
 
-						if [ active == 1 ]; then
-							tput cuu 2
-		#				echo "Dup cuu 2 active 1"
-						fi
-						tput el 1
-						tput el
-#						printf '\e[0;46m'
-
-#						printf '\e[0;33m'
-						tput rmam
-			
 				    		if [ "$1" ]; then
 		#
-						tput cuu 2
 printf "${LTGREEN}$mode KBd Dup %4s %-8s %-6s %s,%s, %s, %s %s %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 #printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
 					    	else
@@ -434,18 +396,14 @@ printf "${LTGREEN}$mode Net Dup  %4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${END
 #							printf '\e[0m'
 #						fi
 
-						tput smam
 echo "ProcessNewCall echo Duplicate Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 printf "${ENDCOLOR}"
 			
 				fi  # end of keyup loop
-	#		fi   #end of lastcall2 loop
-	#			lastcall2="$call"
 		fi  #end of not netcont loop
 
 		if [ active == 1 ]; then
-			tput cuu 1
 			active=0
 		fi
 		lcm=0
@@ -468,6 +426,9 @@ echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_de
 		fi	
 	fi
 echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+	
+stty sane
+
 }
 
 function ParseLine(){

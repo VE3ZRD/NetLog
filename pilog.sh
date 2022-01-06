@@ -276,6 +276,7 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/pilog_debug.txt > /dev/nul
 		getnxdn
         fi
 
+	stty sane
 
 echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/pilog_debug.txt > /dev/null
 
@@ -505,6 +506,7 @@ if [ -z $pl ]; then
   pl="0"
 fi
 echo "ParseLine End Function " | tee -a /home/pi-star/pilog_debug.txt > /dev/null
+	stty sane
 
 }
 
