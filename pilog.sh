@@ -84,31 +84,6 @@ echo ""
 
 trap fnEXIT SIGINT SIGTERM
 
-function LoopKeys()
-{
-loop=true
-while $loop; do
-    trapKey=
-    if IFS= read -d '' -rsn 1 -t .002 str; then
-        while IFS= read -d '' -rsn 1 -t .002 chr; do
-            str+="$chr"
-        done
-        case $str in
-            $'\E[A') trapKey=UP    ;;
-            $'\E[B') trapKey=DOWN  ;;
-            $'\E[C') trapKey=RIGHT ;;
-            $'\E[D') trapKey=LEFT  ;;
-            $'\E[E') trapKey=SPACE  ;;
-            q | $'\E') loop=false  ;;
-        esac
-    fi
-    if [ "$trapKey" ] ;then
-        printf "\nDoing something with '%s'.\n" $trapKey
-    fi
-    echo -n .
-done
-
-}
 function getinput()
 {
 	calli=" "
@@ -187,16 +162,80 @@ function getserver(){
 echo "Get Server Data " >> /home/pi-star/pilog_debug.txt
 
 }
+function updatefromqrz(){
+. /home/pi-star/.qrz.conf
+# get a session key from qrz.com
+session_xml=$(curl -s -X GET 'http://xmldata.qrz.com/xml/current/?username='${user}';password='${password}';agent=qrz_sh')
+
+# check for login errors
+#e=$(printf %s "$session_xml" | grep -oP "(?<=<Error>).*?(?=</Error>)" ) # only works with GNU grep
+e=$(printf %s "$session_xml" | awk -v FS="(<Error>|<\/Error>)" '{print $2}' 2>/dev/null | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g')
+if [ "$e" != ""  ]
+  then
+    echo "The following error has occured: $e"
+    exit
+  fi
+
+# extract session key from response
+#session_key=$(printf %s "$session_xml" |grep -oP '(?<=<Key>).*?(?=</Key>)') # only works with GNU grep
+session_key=$(printf %s "$session_xml" | awk -v FS="(<Key>|<\/Key>)" '{print $2}' 2>/dev/null | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g')
+
+# lookup callsign at qrz.com
+lookup_result=$(curl -s -X GET 'http://xmldata.qrz.com/xml/current/?s='${session_key}';callsign='${call}'')
+
+# check for login errors
+#e=$(printf %s "$lookup_result" | grep -oP "(?<=<Error>).*?(?=</Error>)" ) # only works with GNU grep
+e=$(printf %s "$lookup_result" | awk -v FS="(<Error>|<\/Error>)" '{print $2}' 2>/dev/null | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g')
+if [ "$e" != ""  ]
+  then
+    echo "$e"
+    exit
+  fi
+
+# grep field values from xml and put them into variables
+#for f in "call" "fname" "name" "addr1" "addr2" "country" "grid" "email" "user" "lotw" "mqsl" "eqsl" "qslmgr"
+for f in "call" "fname" "name" "addr1" "addr2" "state" "country" "user"
+do
+
+  #z=$(printf %s "$lookup_result" | grep -oP "(?<=<${f}>).*?(?=</${f}>)" ) # only works with GNU grep
+  z=$(printf %s "$lookup_result" | awk -v FS="(<${f}>|<\/${f}>)" '{print $2}' 2>/dev/null | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g')
+  eval "$f='${z}'";
+done
+
+# return extracted information to user
+echo "================================================================"
+echo "QRZ.com results for $call:"
+echo "================================================================"
+echo "Call:       $call"
+echo "Name:       $fname $name"
+echo "Street:     $addr1"
+echo "City:       $addr2"
+echo "State:      $state"
+echo "Country:    $country"
+
+touch /usr/local/etc/stripped2.csv
+newcall=$(echo "0000","$call","$fname","$name","$addr2","$state","$country") 
+echo "$newcall"
+echo "$newcall" >> /usr/local/etc/stripped2.csv
+
+
+}
+
 
 function getuserinfo(){
 	if [ "$cm" != 6 ] && [ ! -z  "$call" ] && [ "$call" != "to" ]; then
 		call=$(echo "$call" | cut -d "/" -f 1)
 		call=$(echo "$call" | cut -d "-" -f 1)
-if [ $call ]; then
+	if [ $call ]; then
  		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped.csv)	
 		if [ $? != 0 ]; then
   			echo "Sed Error on Line $LINENO" 
+	 		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped2.csv)	
+			if [ $? != 0 ]; then
+				updatefromqrz
+			fi
 		fi 
+
 		line=$(echo "$lines" | head -n1)
 
 		if [ line ]; then

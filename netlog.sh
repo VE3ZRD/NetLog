@@ -295,7 +295,7 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
                 fdate=$(echo "$nline1" | cut -d " " -f2)
 		amode="yes"
 
-textstr=$(echo -en " ${YELLOW}   Active $mode QSO from $call $name, $state, $country, $server : $tg ${ENDCOLOR}\r")
+textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}\r")
 echo "$textstr"
 
 	echo -en "\033[1A\033"

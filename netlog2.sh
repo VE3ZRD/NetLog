@@ -78,9 +78,9 @@ trap 'err_report $LINENO' ERR
 
 fnEXIT() {
 
- tput cuu1
- tput el
- tput el1 
+ #tput cuu1
+ #tput el
+ #tput el1 
   echo -e "${BOLD}${WHI}THANK YOU FOR USING NETLOG by VE3RD!${SGR0}${DEF}"
 echo ""
   exit
@@ -116,14 +116,11 @@ done
 }
 function getinput()
 {
-	tput el
-	tput el1
 	calli=" "
 	echo -n "Type a Call Sign and press enter: ";
 	read calli
 	call=${calli^^} 
 	echo ""
-	tput cuu 2
 	stty sane
 	cm=2
 	keybd="yes"
@@ -182,6 +179,8 @@ function getnxdn(){
 }
 
 function getserver(){
+sudo mount -o remount,rw / 
+
 	Addr=$(sed -n -r "/^\[DMR Network\]/ { :l /^Address[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/mmdvmhost)
 	DMRen=$(sed -n -r "/^\[DMR\]/ { :l /^Enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" /etc/mmdvmhost)
 
@@ -202,7 +201,7 @@ function getuserinfo(){
 		call=$(echo "$call" | cut -d "/" -f 1)
 		call=$(echo "$call" | cut -d "-" -f 1)
 if [ $call ]; then
- 		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped.csv)	
+ 		lines=$(sed -n '/'"$call"',/p' /usr/local/etc/stripped.csv)	
 		if [ $? != 0 ]; then
   			echo "Sed Error on Line $LINENO" 
 		fi 
@@ -223,7 +222,9 @@ if [ $call ]; then
 		fi
 fi
 	fi
-echo "End Get User Info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+sudo mount -o remount,rw / 
+
+echo "End Get User Info - $name" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 }
 
 function checkcall(){ 
@@ -244,6 +245,7 @@ function checkcall(){
 	#			ckt=$(echo "$logline" | cut -d "," -f 2) # time
 			fi
 		fi
+
 }
 
 function Logit(){ 
@@ -276,6 +278,7 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/nu
 	getuserinfo 
 	checkcall 
 #	getserver 
+sudo mount -o remount,rw / 
 
 	if [ "$mode" == "DMR" ]; then
 		getserver
@@ -289,45 +292,30 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/nu
 	if [ "$pmode" == "NXDNA" ]; then
 		getnxdn
         fi
-#echo "Process Mode - $pmode : Call:$call" >> /home/pi-star/netlog_debug.txt
 
 
 echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
-#	if [[ $nline1 =~ "header" ]]; then
 	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ] || [ "$pmode" == "NXDNA" ]; then
                 fdate=$(echo "$nline1" | cut -d " " -f2)
 		amode="yes"
-#                printf '\e[1;32m'
-#		tput sc
-	#	echo -en "    Active $mode QSO from $call $name, $state, $country, $server : $tg\r"
 
 
-textstr=$(echo -en " ${YELLOW}   Active $mode QSO from $call $name, $state, $country, $server : $tg ${ENDCOLOR}\r")
+textstr=$(echo -en " ${YELLOW}   $Time Active $mode QSO from $call $name, $state, $country, $server : $tg ${ENDCOLOR}\r")
 echo "$textstr"
-
-#printf '\033[<1>A'
-#echo -en "\[\033[<1>A"
-#		printf "    Active $mode QSO from $call $name, $state, $country, $server : $tg\n"
-#		printf "    Active $mode QSO from $call "
-#		printf "    Active $name, $state, $country, "
-#		printf "    Active $server : $tg\n"
-#		tput rc
 
 	echo -en "\033[1A\033"
 
-echo "ProcessNewCall echo Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall echo Active QSO $pmode  $call" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	fi
 
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
 		amode="no"
 
-echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall Last Heard $pmode  $call" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		if [ "$call" == "$netcont" ]; then
 			sudo mount -o remount,rw /
 
-#			tput rmam
-#			printf '\e[1;34m'		
 			if [ "$rf" == 1 ]; then
 				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name BER:$ber  $tg,   $server ${ENDCOLOR}\n"
 			else
@@ -335,17 +323,13 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			fi	
 			printf "00,--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" | tee -a  /home/pi-star/netlog.log > /dev/null
 
-#			printf '\e[0m'
-echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall Netnet Control " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		fi
 
 		if [ "$call" != "$netcont" ]; then
 			lastcall1=""
 			call1=""
 			netcontdone=0
-#			lastcall1=""
-#			if [ "$lastcall2" != "$call" ]; then
-			#	dur=$(printf "%1.0f\n" $durt)
 				if [ $dur -lt 2 ]; then
 
 					if [ "$callstat" == "New" ]; then
@@ -353,12 +337,10 @@ echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt 
 printf "${LTCYAN} %-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s ${ENDCOLOR} \n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg "
 #						printf '\e[0m'
 						Logit
-echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall Loged New Key Up from $call" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 				
 					if [ "$callstat" == "Dup" ] && [ "$nodupes" == 0 ]; then
-#						printf '\e[0;46m'
-#						printf '\e[0;33m'
 
 
 						cnt2ds=$(sed -n '/'"$call"'/p' /home/pi-star/netlog.log)
@@ -369,83 +351,52 @@ echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt >
 
 printf "${LTGREEN}%3s SKU Dup " "$mode"
 printf " %4s %-8s" "$cnt2d" "$Time" 
-#printf "-- %-6s " "$call"
 printf " %-6s " "$call"
-
-#printf "%-3s SKU Dup %-3 %-8s -- %-6s" "$mode" "$cnt2d" "$Time" "$call"
 
 
 printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
 printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
-						printf '\e[0m'
-echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+
+echo "ProcessNewCall Keyup Dupe for $call" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 
 				#		echo "Dupe Callstat = $callstat $dur"
 				else  # Real Call
 
 					if [ "$callstat" == "New" ]; then
-##						echo " Write New Call to Screen"
 						cnt=$((cnt+1))
-#						printf '\e[0;40m'
-#						printf '\e[1;36m'
-						if [ active == 1 ]; then
-							tput cuu 1
-						fi
 
 					    	if [ "$1" ]; then
-#								tput cuu 2
 printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
 					    	else
 printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
 					    	
 						fi
-#						fi
-#						printf '\e[0m'
-				#		tput smam
-						#lcm=0
 						Logit
-echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall - Logged New Call $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 
 					if [ "$callstat" == "Dup" ] && [ "$nodupes" == 0 ]; then
 							## Write Duplicate Info to Screen
 
-						if [ active == 1 ]; then
-							tput cuu 2
-		#				echo "Dup cuu 2 active 1"
-						fi
-						tput el 1
-						tput el
-#						printf '\e[0;46m'
 
-#						printf '\e[0;33m'
-						tput rmam
-			
 				    		if [ "$1" ]; then
 		#
-						tput cuu 2
 printf "${LTGREEN}$mode KBd Dup %4s %-8s %-6s %s,%s, %s, %s %s %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 #printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
 					    	else
 printf "${LTGREEN}$mode Net Dup  %4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${ENDCOLOR} \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 #printf "   %s, %s, %s %s %s \n" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 					    	fi
-#							printf '\e[0m'
-#						fi
 
-						tput smam
-echo "ProcessNewCall echo Duplicate Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall - Duplicate Call $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 printf "${ENDCOLOR}"
 			
 				fi  # end of keyup loop
-	#		fi   #end of lastcall2 loop
-	#			lastcall2="$call"
 		fi  #end of not netcont loop
 
 		if [ active == 1 ]; then
-			tput cuu 1
 			active=0
 		fi
 		lcm=0
@@ -455,9 +406,6 @@ echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.t
 #Watchdog loop
 	if [ "$pmode" == "Watchdog" ]; then
 echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-#		printf '\e[0;40m'
-#		printf '\e[1;31m'
-#		checkcall
 		if [ "$callstat" == "New" ]; then
 			cnt=$((cnt+1))
 			printf " ${LTCYAN} New %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
