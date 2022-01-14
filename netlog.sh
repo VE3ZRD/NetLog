@@ -1,4 +1,4 @@
-   #!/bin/bash
+#!/bin/bash
 ############################################################
 #  This script will automate the process of                #
 #  Logging Calls on a Pi-Star Hotpot			   #
@@ -47,6 +47,7 @@ ber=0
 netcontdone=0 
 nodupes=0 
 rf=0 
+clen=$((0))
 lfdts="" 
 dts="" 
 nline1=""
@@ -64,6 +65,7 @@ line2=""
 yat=""
 keybd="no"
 amode="no"
+stripped=0
 
 err_report() 
 { 
@@ -187,22 +189,31 @@ function getserver(){
 		ms=$(sudo sed -n '/^[^#]*'"$Addr"'/p' /usr/local/etc/DMR_Hosts.txt | head -n1 | sed -E "s/[[:space:]]+/|/g" | cut -d'|' -f1)
  		server=$(echo "$ms" | cut -d " " -f1)
 	fi
+		
+sudo mount -o remount,rw / 
 echo "Get Server Data " >> /home/pi-star/netlog_debug.txt
 
 }
 
 function getuserinfo(){
+stripped=0
 	if [ "$cm" != 6 ] && [ ! -z  "$call" ] && [ "$call" != "to" ]; then
 		call=$(echo "$call" | cut -d "/" -f 1)
 		call=$(echo "$call" | cut -d "-" -f 1)
 if [ $call ]; then
- 		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped.csv)	
-		if [ $? != 0 ]; then
-  			echo "Sed Error on Line $LINENO" 
+ 		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped.csv | head -n 1)	
+		
+		if [ -z "$lines"  ]; then
+	 		lines=$(sed -n '/'",$call"',/p' /usr/local/etc/stripped2.csv | head -n 1)	
+		else
+			stripped=1
 		fi 
+		if [ "$lines"  ]; then
+			stripped=2
+		fi
 		line=$(echo "$lines" | head -n1)
 
-		if [ line ]; then
+		if [ ! -z line ] || [ stripped == 0 ]; then
 			name=$(echo "$line" | cut -d "," -f 3 | cut -d " " -f 1)
 #			name=$(echo "$line" | cut -d "," -f 3 )
 			city=$(echo "$line"| cut -d "," -f 5)
@@ -210,13 +221,13 @@ if [ $call ]; then
 			country=$(echo "$line" | cut -d "," -f 7)
 		else
 			callinfo="No Info"
-			name=""
-			city=""
-			state=""
-			country=""
+			name="NA"
+			city="NA"
+			state="NA"
+			country="NA"
 		fi
-fi
 	fi
+fi
 echo "End Get User Info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 }
 
@@ -249,18 +260,18 @@ function Logit(){
 
 
 function ProcessNewCall(){ 
+
 RED="\e[31m"
 GREEN="\e[32m"
 LTMAG="\e[95m"
 LTGREEN="\e[92m"
 LTCYAN="\e[96m"
 YELLOW="\e[33m"
-	
-stty sane
-
 ENDCOLOR="\e[0m"
 
+
 #echo "Processing Call:$call Mode:$pmode"
+
 if [ -z "$call" ]; then
    call="VE3ZRD"
 fi
@@ -285,8 +296,10 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/nu
 	if [ "$pmode" == "NXDNA" ]; then
 		getnxdn
         fi
+
 #echo "Process Mode - $pmode : Call:$call" >> /home/pi-star/netlog_debug.txt
 
+sudo mount -o remount,rw / 
 
 echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
@@ -295,16 +308,18 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
                 fdate=$(echo "$nline1" | cut -d " " -f2)
 		amode="yes"
 
-textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}\r")
-echo "$textstr"
+textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}")
+#echo "$textstr"
 
-	echo -en "\033[1A\033"
+####	echo -en "\033[1A\033"
+sudo mount -o remount,rw / 
 
 echo "ProcessNewCall echo Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	fi
 
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
 		amode="no"
+sudo mount -o remount,rw / 
 
 echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		if [ "$call" == "$netcont" ]; then
@@ -318,6 +333,8 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			printf "00,--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" | tee -a  /home/pi-star/netlog.log > /dev/null
 
 #			printf '\e[0m'
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		fi
 
@@ -335,6 +352,8 @@ echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt 
 printf "${LTCYAN} %-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s ${ENDCOLOR} \n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg "
 #						printf '\e[0m'
 						Logit
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 				
@@ -359,7 +378,9 @@ printf " %-6s " "$call"
 
 printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
 printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
-						printf '\e[0m'
+
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 
@@ -379,6 +400,8 @@ printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs
 					    	
 						fi
 						Logit
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 
@@ -395,6 +418,7 @@ printf "${LTGREEN}$mode Net Dup  %4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${END
 					    	fi
 #							printf '\e[0m'
 #						fi
+sudo mount -o remount,rw / 
 
 echo "ProcessNewCall echo Duplicate Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
@@ -408,10 +432,14 @@ printf "${ENDCOLOR}"
 		fi
 		lcm=0
 	fi
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
 #Watchdog loop
 	if [ "$pmode" == "Watchdog" ]; then
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 #		printf '\e[0;40m'
 #		printf '\e[1;31m'
@@ -425,10 +453,11 @@ echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_de
 			printf "${LTGREEN} Dup %s  %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
 		fi	
 	fi
-echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-	
-stty sane
+sudo mount -o remount,rw / 
 
+echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+#echo "ProcessNewCall End " 
+	
 }
 
 function ParseLine(){
@@ -443,9 +472,6 @@ echo "ParseLine $fdate $ftime - $fmode" | tee -a /home/pi-star/netlog_debug.txt 
 	if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
 		if [[ "$nline1" =~ "from" ]]; then
 echo "ParseLine $mode $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-
-
-
 
 			if [ "$mode" == "DMR" ]; then 
 				if [[ "$nline1" =~ "header" ]] || [[ "$nline1" =~ "late entry" ]]; then
@@ -558,61 +584,70 @@ echo "ParseLine mode NXDN " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					cnt=$((cnt+1))
 					pmode="Watchdog"
   		fi
-
 	fi
 if [ -z $pl ]; then
   pl="0"
 fi
 echo "ParseLine End Function " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-
+   
 }
 
 function GetLastLine(){
         f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
         line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
-	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
+#	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )
+	nline1=$(tail -n 1 "$f1" | tr -s \ )
+	tcall=$(echo "$nline1" |  grep -oP '(?<=from )\w+(?= to)' | tr "/" " " | tr "-" " ")
+
         newline="$nline1"
-        mode=$(echo "$nline1" | cut -d " " -f 4 ||  sed 's/-ND//')
 
-#	if [[ "$nline1" =~ "end" ]] && [ "$amode" == "yes" ]; then
-#			oldline=""
-#			pmode="DMRT"
-#	fi
+        mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/-ND//' | sed 's/,//g' )
 
-	tcal="VE3ZRD"
-    
-        if [ "$oldline" != "$newline" ] && [ "$tcall" != "to" ]; then
+        if [ "$oldline" != "$newline" ]; then
+#      tail -n 1 "$f1" | tr -s \ | cut -d " " -f2
+#      tail -n 1 "$f1" | tr -s \ | cut -d " " -f3
 		dt=$(date --rfc-3339=ns)
+
 		sudo mount -o remount,rw / 
 
 		 echo "GetLastLine - Got New Line $dt" | tee /home/pi-star/netlog_debug.txt > /dev/null
+#      tail -n 1 "$f1" | tr -s \ | cut -d " " -f2
+#      tail -n 1 "$f1" | tr -s \ | cut -d " " -f3
 
-                if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
+	          if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
 
-			tcall=$(echo "$nline1" |  grep -oP '(?<=from )\w+(?= to)')
+	#		tcall=$(echo "$nline1" |  grep -oP '(?<=from )\w+(?= to)')
+ 
+			 clen=$(echo $tcall | wc -c)
+			if [ ! -z "$tcall" ] && [ "$clen" -ge 4 ] && [ "$clen" -le 7 ]; then
+				call="$tcall"
 
-			if [ ! -z "$tcall" ]; then
+#echo "Mode3:|$mode|    Call:$tcall"
+#echo "$nline1"
 				ParseLine
                         	ProcessNewCall
 			fi
                 fi
 		dt=$(date --rfc-3339=ns)
+#echo "Get dt"
 		echo "End of GetLastLine Loop  $dt "| tee -a /home/pi-star/netlog_debug.txt > /dev/null
-		
-		echo "echo 1 > /proc/sys/vm/drop_caches" > /dev/null
+#echo "Get 11"
+	
+#		echo "echo 1 > /proc/sys/vm/drop_caches" > /dev/null
 
-        fi
         oldline="$newline"
+#	echo "End of Loop: wait for next line"
+        fi
 
 }
 
 function StartUp()
 {
-        f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
-        line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
-	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
-        newline="$nline1"
-	oldline="$newline"
+#        f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
+#        line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
+#	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
+#        newline="$nline1"
+	oldline=""
 
 if [ "$netcont" != "ReStart" ]; then
 
@@ -660,12 +695,14 @@ do
 	cm=0	
  	Time=$(date '+%T')  
 	GetLastLine
-	sync
+#	sync
 #	sleep 1.0
-while read -t1  
-  do getinput
-done
+
+	while read -t1  
+  	do 
+		getinput
+	done
 
 
 done
-
+echo "No Longer True"
