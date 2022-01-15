@@ -6,11 +6,11 @@
 #                                                          #
 #  VE3RD                              Created 2021/07/05   #
 ############################################################
-set -o errexit 
-set -o pipefail 
-set -e 
-set -o errtrace
-set -E -o functrace
+#set -o errexit 
+#set -o pipefail 
+set -eu 
+#set -o errtrace
+#set -E -o functrace
 
 ver=2021123001
 
@@ -22,25 +22,28 @@ callinfo="No Info"
 lastcall2="" 
 lastcall1=""
 netcont="none"
-if [ "$1" ]; then
-	P1="$1" 
-	P1S=${P1^^} 
-	netcont=${P1^^} 
-fi
-if [ "$2" ]; then
-	P2="$2" 
-	P2S=${P2^^} 
-	stat=${P2^^}
-fi
-if [ "$3" ]; then
-	P3="$3" 
-	P3S=${P3^^} 
-fi
+stat=""
+
+#P1="$1"
+
+#if [ ! -z "$P1" ]; then
+#	netcont=$(echo "$P1" | tr '[:lower:]' '[:upper:]')
+#fi
+#if [ "$2" ]; then
+#	P2="$2" 
+#	P2S=${P2^^} 
+#	stat=${P2^^}
+#fi
+#if [ "$3" ]; then
+#	P3="$3" 
+#	P3S=${P3^^} 
+#fi
 TG=""
 #echo "$netcont"   "$stat" 
 dur=$((0)) 
 cnt=$((0)) 
 lcnt=$((0)) 
+cntd=0
 cm=0 
 lcm=0 
 ber=0 
@@ -88,31 +91,6 @@ echo ""
 
 trap fnEXIT SIGINT SIGTERM
 
-function LoopKeys()
-{
-loop=true
-while $loop; do
-    trapKey=
-    if IFS= read -d '' -rsn 1 -t .002 str; then
-        while IFS= read -d '' -rsn 1 -t .002 chr; do
-            str+="$chr"
-        done
-        case $str in
-            $'\E[A') trapKey=UP    ;;
-            $'\E[B') trapKey=DOWN  ;;
-            $'\E[C') trapKey=RIGHT ;;
-            $'\E[D') trapKey=LEFT  ;;
-            $'\E[E') trapKey=SPACE  ;;
-            q | $'\E') loop=false  ;;
-        esac
-    fi
-    if [ "$trapKey" ] ;then
-        printf "\nDoing something with '%s'.\n" $trapKey
-    fi
-    echo -n .
-done
-
-}
 function getinput()
 {
 	calli=" "
@@ -152,8 +130,9 @@ function header(){
 	echo "Dates and Times Shown are Local to your hotspot"
 #	echo ""
 	echo "Net Log Started $dates"
-	echo "000, Net Log Started $dates" | tee /home/pi-star/netlog.log > /dev/null
-#	echo "000, Net Log Started $dates" > /home/pi-star/netlog.log
+	echo "0, Net Log Started $dates" | tee /home/pi-star/netlog.log > /dev/null
+#	echo "0, Net Log Started $dates" > /home/pi-star/netlog.log
+	echo "0" | tee ./count.val > /dev/null
 	echo ""
 	if [ ! "$netcont" ] || [ "$netcont" == "NEW" ]; then
 		echo "No Net Controller Specified"
@@ -233,7 +212,7 @@ echo "End Get User Info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
 function checkcall(){ 
 		if [ "$cm" != 6 ] && [ "$call" != "to" ]; then 
-			logline=$(sed -n '/'"$call"',/p' /home/pi-star/netlog.log) 
+			logline=$(sed -n '/'"$call"',/p' /home/pi-star/netlog.log | head -n 1) 
 			if [ $? != 0 ]; then
   				echo "Sed Error on Line $LINENO"
 			fi
@@ -254,7 +233,13 @@ function checkcall(){
 function Logit(){ 
 	sudo mount -o remount,rw /
 	## Write New Call to Log File
-	echo "$cnt, $mode $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " | tee -a /home/pi-star/netlog.log > /dev/null
+	echo "$cnt, $mode, $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " | tee -a /home/pi-star/netlog.log > /dev/null
+	echo "$cnt" | tee ./count.val > /dev/null
+}
+function LogDup(){ 
+	sudo mount -o remount,rw /
+	## Write Duplicate Call to Log File
+	echo " -- Dup $cntd, $mode, $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " >> /home/pi-star/netlog.log 
 }
 
 
@@ -330,7 +315,7 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			else
 				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec,  $tg,   $server ${ENDCOLOR}\n"
 			fi	
-			printf "00,--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" | tee -a  /home/pi-star/netlog.log > /dev/null
+			printf "--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" | tee -a  /home/pi-star/netlog.log > /dev/null
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
@@ -368,18 +353,13 @@ echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt >
 						fi
 						cnt2d=$(echo "$cnt2ds" | cut -d "," -f 1)
 
-printf "${LTGREEN}%3s SKU Dup " "$mode"
-printf " %4s %-8s" "$cnt2d" "$Time" 
-#printf "-- %-6s " "$call"
-printf " %-6s " "$call"
-
-#printf "%-3s SKU Dup %-3 %-8s -- %-6s" "$mode" "$cnt2d" "$Time" "$call"
-
-
-printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
-printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
+#printf "${LTGREEN}%3s SKU Dup $mode"
+#printf " %4s %-8s %-6s " "$cnt2d" "$Time" "$call" 
+#printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
+#printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
 
 sudo mount -o remount,rw / 
+LogDup
 
 echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
@@ -393,7 +373,7 @@ echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev
 #						printf '\e[0;40m'
 #						printf '\e[1;36m'
 
-					    	if [ "$1" ]; then
+					    	if [ "$kbd" == true ]; then
 printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
 					    	else
 printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
@@ -408,7 +388,7 @@ echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt >
 					if [ "$callstat" == "Dup" ] && [ "$nodupes" == 0 ]; then
 							## Write Duplicate Info to Screen
 
-				    		if [ "$1" ]; then
+				    		if [ "$kbd" == true ]; then
 		#
 printf "${LTGREEN}$mode KBd Dup %4s %-8s %-6s %s,%s, %s, %s %s %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 #printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
@@ -419,7 +399,7 @@ printf "${LTGREEN}$mode Net Dup  %4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${END
 #							printf '\e[0m'
 #						fi
 sudo mount -o remount,rw / 
-
+LogDup
 echo "ProcessNewCall echo Duplicate Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
 printf "${ENDCOLOR}"
@@ -467,7 +447,6 @@ echo "ParseLine getting date/time " | tee -a /home/pi-star/netlog_debug.txt > /d
 	fdate=$(echo "$nline1" | cut -d " " -f2 )    #| sed 's/ *$//g' 
 	ftime=$(echo "$nline1" | cut -d " " -f3 )
 #	mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/,//g')
-echo "ParseLine $fdate $ftime - $fmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
 	if [ "$mode" == "DMR" ] || [ "$mode" == "YSF" ] || [ "$mode" == "P25" ] || [ "$mode" == "NXDN" ]; then
 		if [[ "$nline1" =~ "from" ]]; then
@@ -585,25 +564,26 @@ echo "ParseLine mode NXDN " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					pmode="Watchdog"
   		fi
 	fi
-if [ -z $pl ]; then
-  pl="0"
-fi
 echo "ParseLine End Function " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
    
 }
 
 function GetLastLine(){
+	ok=false
         f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
         line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
 #	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )
 	nline1=$(tail -n 1 "$f1" | tr -s \ )
 	tcall=$(echo "$nline1" |  grep -oP '(?<=from )\w+(?= to)' | tr "/" " " | tr "-" " ")
-
+	if [[ "$nline1" =~ "from" ]]; then
+		ok=true
+	fi
         newline="$nline1"
-
+#echo "$oldline"
+#echo "$newline"
         mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/-ND//' | sed 's/,//g' )
 
-        if [ "$oldline" != "$newline" ]; then
+        if [ "$oldline" != "$newline" ] && [ "$ok" == true ]; then
 #      tail -n 1 "$f1" | tr -s \ | cut -d " " -f2
 #      tail -n 1 "$f1" | tr -s \ | cut -d " " -f3
 		dt=$(date --rfc-3339=ns)
@@ -643,11 +623,11 @@ function GetLastLine(){
 
 function StartUp()
 {
-#        f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
+        f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
 #        line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
-#	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
-#        newline="$nline1"
-	oldline=""
+	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
+        newline="$nline1"
+	oldline="$nline1"
 
 if [ "$netcont" != "ReStart" ]; then
 
@@ -663,27 +643,26 @@ if [ "$netcont" != "ReStart" ]; then
         	header 
 
 	elif [ "$netcont" != "ReStart" ]; then
-                lcnt=$( wc -l /home/pi-star/netlog.log | cut -d " " -f1 )
 
-               if [[ lcnt -eq 1 ]]; then
-			cnt=0
-		fi
-               if [[ lcnt -gt 1 ]]; then
-                        cntt=$(grep "^[^00;]" /home/pi-star/netlog.log | tail -n 1 | cut -d "," -f 1)
-                        cnt=$((cntt))
+		cntt=$(cat ./count.val)
+                cnt=$((cntt))
 
                         echo "Restart Program Ver:$ver - Counter = $cnt"
-                        cat /home/pi-star/netlog.log
-                fi
-	fi
-fi
+                      #  cat /home/pi-star/netlog.log 
+			grep -v '^ --' /home/pi-star/netlog.log
+   #             fi
 
+		
+	fi
+
+fi
 }
 
 ######## Start of Main Program
 ###LoopKeys
 
 StartUp
+
 #getnewcall
 callstat=""
 
@@ -692,17 +671,19 @@ callstat=""
 
 while true
 do 
+kbd=false
 	cm=0	
  	Time=$(date '+%T')  
 	GetLastLine
+
+
 #	sync
 #	sleep 1.0
 
 	while read -t1  
   	do 
+		kbd=true
 		getinput
 	done
-
-
 done
 echo "No Longer True"
