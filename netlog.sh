@@ -309,9 +309,9 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
 		amode="yes"
 
 textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}")
-#echo "$textstr"
+echo "$textstr"
 
-####	echo -en "\033[1A\033"
+echo -en "\033[1A\033"
 sudo mount -o remount,rw / 
 
 echo "ProcessNewCall echo Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
@@ -475,7 +475,7 @@ echo "ParseLine $mode $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/nul
 
 			if [ "$mode" == "DMR" ]; then 
 				if [[ "$nline1" =~ "header" ]] || [[ "$nline1" =~ "late entry" ]]; then
-					call=$(echo "$nline1" | cut -d" " -f 12)
+#					call=$(echo "$nline1" | cut -d" " -f 12)
 					tg=$(echo "$nline1" | cut -d" " -f 15)
 					pmode="DMRA"
 				fi
@@ -493,7 +493,7 @@ echo "ParseLine Mode DMR " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 			fi
 			if [ "$mode" == "YSF" ]; then 
 				if [[ "$nline1" =~ "header from" ]] || [[ "$nline1" =~ "data from" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 1)
+#					call=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 1)
 					name=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 2)
 			#		echo "Call=$call"
 					yat=$(echo "$nline1" | cut -d " " -f 14)
@@ -503,7 +503,7 @@ echo "ParseLine Mode DMR " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 				fi
 
 				if [[ "$nline1" =~ "end of transmission" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 11)
+#					call=$(echo "$nline1" | cut -d " " -f 11)
 					ber=$(echo "$nline1" | cut -d " " -f 18)
 				#	pl=$(echo "$nline1" | cut -d " " -f 17)
 					durt=$(echo "$nline1" | cut -d " " -f 15)
@@ -512,7 +512,7 @@ echo "ParseLine Mode DMR " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 				fi
 
 				if [[ "$nline1" =~ "transmission lost" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 8)
+#					call=$(echo "$nline1" | cut -d " " -f 8)
 					ber=$(echo "$nline1" | cut -d " " -f 15)
 					durt=$(echo "$nline1" | cut -d " " -f 11)
 					dur=$(printf "%1.0f\n" $durt)
