@@ -8,7 +8,8 @@
 ############################################################
 #set -o errexit 
 #set -o pipefail 
-set -eu 
+#set -eu 
+set -e 
 #set -o errtrace
 #set -E -o functrace
 
@@ -24,20 +25,24 @@ lastcall1=""
 netcont="none"
 stat=""
 
-#P1="$1"
+P1="$1"
 
-#if [ ! -z "$P1" ]; then
-#	netcont=$(echo "$P1" | tr '[:lower:]' '[:upper:]')
-#fi
-#if [ "$2" ]; then
-#	P2="$2" 
+if [ ! -z "$P1" ]; then
+	netcont=$(echo "$P1" | tr '[:lower:]' '[:upper:]')
+fi
+
+if [ "$2" ]; then
+	P2="$2" 
 #	P2S=${P2^^} 
 #	stat=${P2^^}
-#fi
-#if [ "$3" ]; then
-#	P3="$3" 
-#	P3S=${P3^^} 
-#fi
+	stat=$(echo "$P2" | tr '[:lower:]' '[:upper:]')
+fi
+
+if [ "$3" ]; then
+	P3="$3" 
+	P3S=${P3^^} 
+fi
+
 TG=""
 #echo "$netcont"   "$stat" 
 dur=$((0)) 
@@ -207,6 +212,8 @@ if [ $call ]; then
 		fi
 	fi
 fi
+sudo mount -o remount,rw / 
+
 echo "End Get User Info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 }
 
@@ -264,6 +271,8 @@ if [ "$keybd" == "yes" ]; then
 	pmode="DMRT"    
   	keybd="no"
 fi
+sudo mount -o remount,rw / 
+
 echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	getuserinfo 
 	checkcall 
@@ -281,6 +290,7 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/nu
 	if [ "$pmode" == "NXDNA" ]; then
 		getnxdn
         fi
+
 
 #echo "Process Mode - $pmode : Call:$call" >> /home/pi-star/netlog_debug.txt
 
@@ -443,6 +453,8 @@ echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 function ParseLine(){
 #	echo "Last Line : $nline1"
 	tg=""
+sudo mount -o remount,rw / 
+
 echo "ParseLine getting date/time " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	fdate=$(echo "$nline1" | cut -d " " -f2 )    #| sed 's/ *$//g' 
 	ftime=$(echo "$nline1" | cut -d " " -f3 )
@@ -454,19 +466,21 @@ echo "ParseLine $mode $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/nul
 
 			if [ "$mode" == "DMR" ]; then 
 				if [[ "$nline1" =~ "header" ]] || [[ "$nline1" =~ "late entry" ]]; then
-#					call=$(echo "$nline1" | cut -d" " -f 12)
-					tg=$(echo "$nline1" | cut -d" " -f 15)
+#					call=$(echo "$nline1" | cut -d " " -f 12)
+					tg=$(echo "$nline1" | cut -d " " -f 15 | sed 's/,//g')
 					pmode="DMRA"
 				fi
 				if [[ "$nline1" =~ "transmission" ]]; then
-					call=$(echo "$nline1" | cut -d" " -f 14)
-					tg=$(echo "$nline1" | cut -d" " -f 17)
-					pl=$(echo "$nline1" | cut -d" " -f 20)
-					ber=$(echo "$nline1" | cut -d" " -f 24)
-					durt=$(echo "$nline1" | cut -d" " -f 18)
+					call=$(echo "$nline1" | cut -d " " -f 14)
+					tg=$(echo "$nline1" | cut -d " " -f 17 | sed 's/,//g')
+					pl=$(echo "$nline1" | cut -d " " -f 20)
+					ber=$(echo "$nline1" | cut -d " " -f 24)
+					durt=$(echo "$nline1" | cut -d " " -f 18)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="DMRT"
 				fi
+sudo mount -o remount,rw / 
+
 echo "ParseLine Mode DMR " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
 			fi
@@ -517,6 +531,7 @@ echo "ParseLine mode YSF " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="P25T"
 				fi
+sudo mount -o remount,rw / 
 
 echo "ParseLine mode P25 " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 			fi
@@ -610,6 +625,8 @@ function GetLastLine(){
                 fi
 		dt=$(date --rfc-3339=ns)
 #echo "Get dt"
+sudo mount -o remount,rw / 
+
 		echo "End of GetLastLine Loop  $dt "| tee -a /home/pi-star/netlog_debug.txt > /dev/null
 #echo "Get 11"
 	
@@ -628,6 +645,13 @@ function StartUp()
 	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
         newline="$nline1"
 	oldline="$nline1"
+
+if [ ! -f /home/pi-star/Netlog/count.val ]; then
+  
+sudo mount -o remount,rw / 
+echo "0" > /home/pi-star/Netlog/count.val
+fi
+
 
 if [ "$netcont" != "ReStart" ]; then
 
