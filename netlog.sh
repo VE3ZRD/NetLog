@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 ############################################################
 #  This script will automate the process of                #
 #  Logging Calls on a Pi-Star Hotpot			   #
@@ -25,19 +25,18 @@ lastcall1=""
 netcont="none"
 stat=""
 
-#P1="$1"
-P1=""
+P1="$1"
 if [ ! -z "$P1" ]; then
 	netcont=$(echo "$P1" | tr '[:lower:]' '[:upper:]')
 fi
 
-P2=""
+P2="$2"
 if [ "$P2" ]; then
 #	P2S=${P2^^} 
 #	stat=${P2^^}
 	stat=$(echo "$P2" | tr '[:lower:]' '[:upper:]')
 fi
-P3=""
+P3="$3"
 if [ "$P3" ]; then
 	P3S=${P3^^} 
 fi
@@ -367,7 +366,6 @@ echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev
 
 				#		echo "Dupe Callstat = $callstat $dur"
 				else  # Real Call
-echo "Mode3:$mode    Pmode3:$pmode   Call:$call"
 
 					if [ "$callstat" == "New" ]; then
 ##						echo " Write New Call to Screen"
