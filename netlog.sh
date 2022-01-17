@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 ############################################################
 #  This script will automate the process of                #
 #  Logging Calls on a Pi-Star Hotpot			   #
@@ -8,12 +8,12 @@
 ############################################################
 #set -o errexit 
 #set -o pipefail 
-#set -eu 
-set -e 
+set -e
+#set -e 
 #set -o errtrace
 #set -E -o functrace
 
-ver=2021123001
+ver=2022121701
 
 sudo mount -o remount,rw / 
 #printf '\e[9;1t'
@@ -25,21 +25,20 @@ lastcall1=""
 netcont="none"
 stat=""
 
-P1="$1"
-
+#P1="$1"
+P1=""
 if [ ! -z "$P1" ]; then
 	netcont=$(echo "$P1" | tr '[:lower:]' '[:upper:]')
 fi
 
-if [ "$2" ]; then
-	P2="$2" 
+P2=""
+if [ "$P2" ]; then
 #	P2S=${P2^^} 
 #	stat=${P2^^}
 	stat=$(echo "$P2" | tr '[:lower:]' '[:upper:]')
 fi
-
-if [ "$3" ]; then
-	P3="$3" 
+P3=""
+if [ "$P3" ]; then
 	P3S=${P3^^} 
 fi
 
@@ -264,11 +263,8 @@ ENDCOLOR="\e[0m"
 
 #echo "Processing Call:$call Mode:$pmode"
 
-if [ -z "$call" ]; then
-   call="VE3ZRD"
-fi
 if [ "$keybd" == "yes" ]; then
-	pmode="DMRT"    
+	pmode="DMRK"    
   	keybd="no"
 fi
 sudo mount -o remount,rw / 
@@ -282,15 +278,17 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/nu
 		getserver
         fi
 
-	if [ "$pmode" == "YSFA" ]; then
+	if [ "$pmode" == "YSF" ]; then
 		getysf
 		tg="$yat"
         fi
 
-	if [ "$pmode" == "NXDNA" ]; then
+	if [ "$pmode" == "P25" ]; then
+		getp25
+        fi
+	if [ "$pmode" == "NXDN" ]; then
 		getnxdn
         fi
-
 
 #echo "Process Mode - $pmode : Call:$call" >> /home/pi-star/netlog_debug.txt
 
@@ -298,16 +296,13 @@ sudo mount -o remount,rw /
 
 echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
-#	if [[ $nline1 =~ "header" ]]; then
 	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ] || [ "$pmode" == "NXDNA" ]; then
                 fdate=$(echo "$nline1" | cut -d " " -f2)
 		amode="yes"
-
-textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}")
-echo "$textstr"
-
-echo -en "\033[1A\033"
-sudo mount -o remount,rw / 
+		textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}")
+		echo "$textstr"
+		echo -en "\033[1A\033"
+		sudo mount -o remount,rw / 
 
 echo "ProcessNewCall echo Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	fi
@@ -315,7 +310,6 @@ echo "ProcessNewCall echo Active QSO $pmode" | tee -a /home/pi-star/netlog_debug
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
 		amode="no"
 sudo mount -o remount,rw / 
-
 echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		if [ "$call" == "$netcont" ]; then
 			sudo mount -o remount,rw /
@@ -329,7 +323,6 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
-
 echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		fi
 
@@ -337,36 +330,34 @@ echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt 
 			lastcall1=""
 			call1=""
 			netcontdone=0
-#			lastcall1=""
-#			if [ "$lastcall2" != "$call" ]; then
-			#	dur=$(printf "%1.0f\n" $durt)
+
+
 				if [ $dur -lt 2 ]; then
 
 					if [ "$callstat" == "New" ]; then
 						cnt=$((cnt+1))
 printf "${LTCYAN} %-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s ${ENDCOLOR} \n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg "
-#						printf '\e[0m'
 						Logit
 sudo mount -o remount,rw / 
 
 echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
-				
-					if [ "$callstat" == "Dup" ] && [ "$nodupes" == 0 ]; then
-#						printf '\e[0;46m'
-#						printf '\e[0;33m'
 
-
-						cnt2ds=$(sed -n '/'"$call"'/p' /home/pi-star/netlog.log)
+					if [ "$callstat" == "Dup" ]; then
+						cnt2ds=$(sed -n '/'"$call"'/p' /home/pi-star/netlog.log | head -n 1)
 						if [ $? != 0 ]; then
  			 				echo "Sed Error on Line $LINENO"
 						fi
 						cnt2d=$(echo "$cnt2ds" | cut -d "," -f 1)
 
-#printf "${LTGREEN}%3s SKU Dup $mode"
-#printf " %4s %-8s %-6s " "$cnt2d" "$Time" "$call" 
-#printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
-#printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
+printf "${LTGREEN}%3s SKU Dup $mode"
+printf " %4s %-8s %-6s " "$cnt2d" "$Time" "$call" 
+printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
+printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
+
+#printf "${LTGREEN} %3s %4s %-8s %-6s %s, %s, %s, %s  %s, %s, %s, %s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+#printf "${LTGREEN} %3s %4s %-8s %-6s %s, %s, %s, %s  %s, %s, %s, %s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+#printf "${LTGREEN} %3s %4s %-8s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$Time" "$call"
 
 sudo mount -o remount,rw / 
 LogDup
@@ -376,6 +367,7 @@ echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev
 
 				#		echo "Dupe Callstat = $callstat $dur"
 				else  # Real Call
+echo "Mode3:$mode    Pmode3:$pmode   Call:$call"
 
 					if [ "$callstat" == "New" ]; then
 ##						echo " Write New Call to Screen"
@@ -431,9 +423,6 @@ echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.t
 sudo mount -o remount,rw / 
 
 echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-#		printf '\e[0;40m'
-#		printf '\e[1;31m'
-#		checkcall
 		if [ "$callstat" == "New" ]; then
 			cnt=$((cnt+1))
 			printf " ${LTCYAN} New %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
@@ -446,10 +435,9 @@ echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_de
 sudo mount -o remount,rw / 
 
 echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-#echo "ProcessNewCall End " 
 	
 }
-
+################################
 function ParseLineNXDN(){
 		if [[ "$nline1" =~ "network transmission" ]]; then
 			call=$(echo "$nline1" | cut -d " " -f 9)
@@ -467,12 +455,12 @@ function ParseLineNXDN(){
 
 function ParseLineP25(){
 
-				if [[ "$nline1" =~ "received network" ]]; then
+		if [[ "$nline1" =~ "received network" ]]; then
 					call=$(echo "$nline1" | cut -d " " -f 9)
 					tg=$(echo "$nline1" | cut -d " " -f 12)
 					pmode="P25A"
-				fi
-				if [[ "$nline1" =~ "end of transmission" ]]; then
+		fi
+		if [[ "$nline1" =~ "end of transmission" ]]; then
 					call=$(echo "$nline1" | cut -d " " -f 10)
 					tg=$(echo "$nline1" | cut -d " " -f 13)
 					pl=$(echo "$nline1" | cut -d " " -f 16)
@@ -480,11 +468,11 @@ function ParseLineP25(){
 					durt=$(echo "$nline1" | cut -d " " -f 14)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="P25T"
-				fi
+		fi
 }
 
 function ParseLineYSF(){
-				if [[ "$nline1" =~ "header from" ]] || [[ "$nline1" =~ "data from" ]]; then
+		if [[ "$nline1" =~ "header from" ]] || [[ "$nline1" =~ "data from" ]]; then
 #					call=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 1)
 					name=$(echo "$nline1" | cut -d " " -f 9 | cut -d "/" -f 2)
 			#		echo "Call=$call"
@@ -492,28 +480,30 @@ function ParseLineYSF(){
 					tg="$yat"
 					server=""
 					pmode="YSFA"
-				fi
+		fi
 
-				if [[ "$nline1" =~ "end of transmission" ]]; then
+		if [[ "$nline1" =~ "end of transmission" ]]; then
 #					call=$(echo "$nline1" | cut -d " " -f 11)
 					ber=$(echo "$nline1" | cut -d " " -f 18)
 				#	pl=$(echo "$nline1" | cut -d " " -f 17)
 					durt=$(echo "$nline1" | cut -d " " -f 15)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="YSFT"
-				fi
+		fi
 
-				if [[ "$nline1" =~ "transmission lost" ]]; then
+		if [[ "$nline1" =~ "transmission lost" ]]; then
 #					call=$(echo "$nline1" | cut -d " " -f 8)
 					ber=$(echo "$nline1" | cut -d " " -f 15)
 					durt=$(echo "$nline1" | cut -d " " -f 11)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="YSFW"
-				fi
+		fi
 }
-
+################################################
 function ParseLineDMR(){
-#	echo "Last Line : $nline1"
+
+	
+#	echo " Last Line : $nline1"
 	tg=""
 	sudo mount -o remount,rw / 
 
@@ -522,8 +512,6 @@ function ParseLineDMR(){
 	ftime=$(echo "$nline1" | cut -d " " -f3 )
 #	mode=$(echo "$nline1" | cut -d " " -f 4 |  sed 's/,//g')
 
-#M: 2022-01-17 14:04:42.144 DMR Slot 2, received RF voice header from VE3RD to TG 14031665
-#M: 2022-01-17 14:04:42.493 DMR Slot 2, received RF end of voice transmission from VE3RD to TG 14031665, 0.4 seconds, BER: 0.5%, RSSI:            -67/-66/-66 dBm
 
 	if [[ "$nline1" =~ "RF" ]]; then
 
@@ -531,7 +519,7 @@ function ParseLineDMR(){
 					tg=$(echo "$nline1" | cut -d " " -f 15 | sed 's/,//g')
 					ber=0
 					pl=0
- 					durt=""
+					durt=""
 					dur=0
 					pmode="DMRA"
 				fi
@@ -548,15 +536,17 @@ function ParseLineDMR(){
 	else	
 
 			if [[ "$nline1" =~ "network voice header" ]]; then
-					nmode="RF"
+					nmode="NET"
 					tg=$(echo "$nline1" | cut -d " " -f 15 | sed 's/,//g')
 					pl=0
 					ber=0
 					dur=0
+					pmode="DMRA"
 				fi
 
-				if [[ "$nline1" =~ "end of voice transmission" ]]; then
-					call=$(echo "$nline1" | cut -d " " -f 14)
+				if [[ "$nline1" =~ "end of voice" ]]; then
+#					call=$(echo "$nline1" | cut -d " " -f 14)
+					nmode="NET"
 					tg=$(echo "$nline1" | cut -d " " -f 17 | sed 's/,//g')
 					pl=$(echo "$nline1" | cut -d " " -f 20)
 					ber=$(echo "$nline1" | cut -d " " -f 24)
@@ -567,8 +557,6 @@ function ParseLineDMR(){
 				fi	
      	fi
 
-#M: 2022-01-17 03:33:08.462 DMR Slot 2, received network voice header from VE3RD to TG 14000302
-#M: 2022-01-17 03:33:10.730 DMR Slot 2, network watchdog has expired, 1.9 seconds, 75% packet loss, BER: 5.8%
 
 		if [[ "$nline1" =~ "watchdog has expired" ]]; then
 					pl=$(echo "$nline1" | cut -d " " -f 13)
@@ -618,21 +606,26 @@ function GetLastLine(){
 		fi
 	        
 		if [ "$mode" == "YSF" ]; then
+			if [ "$ok" == true ]; then
 				ParseLineYSF
                         	ProcessNewCall
-
+			fi
 		fi
 	        
 		if [ "$mode" == "P25" ]; then
+			if [ "$ok" == true ]; then
 				ParseLineP25
                         	ProcessNewCall
+			fi
 		fi
 	        
 		if [ "$mode" == "NXDN" ]; then
+			if [ "$ok" == true ]; then
 				ParseLineNXDN
                         	ProcessNewCall
-                fi
-		dt=$(date --rfc-3339=ns)
+	                fi
+		fi	
+	dt=$(date --rfc-3339=ns)
 #echo "Get dt"
 sudo mount -o remount,rw / 
 
@@ -651,7 +644,9 @@ function StartUp()
 {
         f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
 #        line1=$(tail -n 1 "$f1" | tr -s \ |  sed -n -e 's/^.*to //p')
-	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
+#	nline1=$(tail -n 1 "$f1" | tr -s \ |  sed 's/ *$//g' | sed 's/%//g' | sed 's/,//g' )   #sed 's/h//g'
+	nline1=$(tail -n 1 "$f1" | tr -s \ )
+
         newline="$nline1"
 	oldline="$nline1"
 
