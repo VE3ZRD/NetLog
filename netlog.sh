@@ -349,8 +349,8 @@ echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt >
 						fi
 						cnt2d=$(echo "$cnt2ds" | cut -d "," -f 1)
 
-printf "${LTGREEN}%3s SKU Dup $mode"
-printf " %4s %-8s %-6s " "$cnt2d" "$Time" "$call" 
+printf "${LTGREEN}%s SKU Dup" "$mode"
+printf " %-4s %-8s %-6s " "$cnt2d" "$Time" "$call" 
 printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
 printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
 
@@ -393,7 +393,7 @@ echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt >
 printf "${LTGREEN}$mode KBd Dup %4s %-8s %-6s %s,%s, %s, %s %s %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 #printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
 					    	else
-printf "${LTGREEN}$mode Net Dup  %4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${ENDCOLOR} \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
+printf "${LTGREEN}$mode Net Dup %-4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${ENDCOLOR} \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 #printf "   %s, %s, %s %s %s \n" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 					    	fi
 #							printf '\e[0m'
@@ -665,18 +665,26 @@ if [ "$netcont" != "ReStart" ]; then
 	if [ "$netcont" == "NEW" ] || [ "$stat" == "NEW" ] || [ ! -f /home/pi-star/netlog.log ]; then
 		## Delete and start a new data file starting with date line
 		dates=$(date '+%A %Y-%m-%d %T')
-
         	header 
 
-	elif [ "$netcont" != "ReStart" ]; then
-
+	elif [ "$netcont" == "OLD" ] || [ "$stat" == "OLD" ] || [ ! -f /home/pi-star/netlog.log ]; then
+		## Delete and start a new data file starting with date line
+		dates=$(date '+%A %Y-%m-%d %T')
 		cntt=$(cat ./count.val)
                 cnt=$((cntt))
-
                         echo "Restart Program Ver:$ver - Counter = $cnt"
-                      #  cat /home/pi-star/netlog.log 
+                        cat /home/pi-star/netlog.log 
+#			grep -v '^ --' /home/pi-star/netlog.log
+   #             fi
+
+	elif [ "$netcont" != "ReStart" ]; then
+		cntt=$(cat ./count.val)
+                cnt=$((cntt))
+                        echo "Restart Program Ver:$ver - Counter = $cnt"
+#                        cat /home/pi-star/netlog.log 
 			grep -v '^ --' /home/pi-star/netlog.log
    #             fi
+
 
 		
 	fi
