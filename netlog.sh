@@ -303,7 +303,7 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
 		echo -en "\033[1A\033"
 		sudo mount -o remount,rw / 
 
-echo "ProcessNewCall echo Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+echo "ProcessNewCall Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	fi
 
    	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
@@ -318,7 +318,7 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			else
 				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec,  $tg,   $server ${ENDCOLOR}\n"
 			fi	
-			printf "--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" >> /home/pi-star/netlog.log 
+			echo "--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt secy  \n" >> /home/pi-star/netlog.log 
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
