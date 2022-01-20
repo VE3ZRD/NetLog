@@ -47,6 +47,7 @@ TG=""
 dur=$((0)) 
 cnt=$((0)) 
 lcnt=$((0)) 
+count=""
 cntd=0
 cm=0 
 lcm=0 
@@ -639,6 +640,12 @@ sudo mount -o remount,rw /
 
 }
 
+function getcount(){
+  count=$(grep -v '^ --' /home/pi-star/netlog.log | tail -n 1 | cut -d "," -f 1)
+  echo "$count" > ./count.csv
+  
+}
+
 function StartUp()
 {
         f1=$(ls -tv /var/log/pi-star/MMDVM* | tail -n 1 )
@@ -672,6 +679,7 @@ if [ "$netcont" != "ReStart" ]; then
 		## Delete and start a new data file starting with date line
 		dates=$(date '+%A %Y-%m-%d %T')
 		cntt=$(cat ./count.val)
+		getcount
                 cnt=$((cntt))
                         echo "Restart Program Ver:$ver - Counter = $cnt"
                         cat /home/pi-star/netlog.log 
@@ -679,6 +687,7 @@ if [ "$netcont" != "ReStart" ]; then
    #             fi
 
 	elif [ "$netcont" != "ReStart" ]; then
+		getcount
 		cntt=$(cat ./count.val)
                 cnt=$((cntt))
                         echo "Restart Program Ver:$ver - Counter = $cnt"
