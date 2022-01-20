@@ -15,6 +15,7 @@ set -e
 
 ver=2022012014
 
+
 sudo mount -o remount,rw / 
 #printf '\e[9;1t'
 
