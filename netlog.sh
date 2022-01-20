@@ -320,7 +320,7 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			else
 				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec,  $tg,   $server ${ENDCOLOR}\n"
 			fi	
-			echo "--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt secy  \n" >> /home/pi-star/netlog.log 
+			echo " --------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt secy  \n" >> /home/pi-star/netlog.log 
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
@@ -687,12 +687,12 @@ if [ "$netcont" != "ReStart" ]; then
    #             fi
 
 	elif [ "$netcont" != "ReStart" ]; then
-		getcount
-		cntt=$(cat ./count.val)
-                cnt=$((cntt))
-                        echo "Restart Program Ver:$ver - Counter = $cnt"
 #                        cat /home/pi-star/netlog.log 
 			grep -v '^ --' /home/pi-star/netlog.log
+			getcount
+			cntt=$(cat ./count.val)
+                	cnt=$((cntt))
+                        echo "Restart Program Ver:$ver - Counter = $cnt"
    #             fi
 
 
