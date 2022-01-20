@@ -318,7 +318,7 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			else
 				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec,  $tg,   $server ${ENDCOLOR}\n"
 			fi	
-			printf "--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" | tee -a  /home/pi-star/netlog.log > /dev/null
+			printf "--------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec  \n" >> /home/pi-star/netlog.log 
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
