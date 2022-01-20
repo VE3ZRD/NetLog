@@ -642,7 +642,7 @@ sudo mount -o remount,rw /
 
 function getcount(){
   count=$(grep -v '^ --' /home/pi-star/netlog.log | tail -n 1 | cut -d "," -f 1)
-  echo "$count" > ./count.csv
+  echo "$count" > ./count.val
   
 }
 
