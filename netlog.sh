@@ -25,7 +25,7 @@ lastcall2=""
 lastcall1=""
 netcont="none"
 stat=""
-
+dt1=""
 P1="$1"
 if [ ! -z "$P1" ]; then
 	netcont=$(echo "$P1" | tr '[:lower:]' '[:upper:]')
@@ -240,13 +240,13 @@ function checkcall(){
 function Logit(){ 
 	sudo mount -o remount,rw /
 	## Write New Call to Log File
-	echo "$cnt, $mode, $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " | tee -a /home/pi-star/netlog.log > /dev/null
+	echo "$cnt, $mode, $dt1, $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " | tee -a /home/pi-star/netlog.log > /dev/null
 	echo "$cnt" | tee ./count.val > /dev/null
 }
 function LogDup(){ 
 	sudo mount -o remount,rw /
 	## Write Duplicate Call to Log File
-	echo " -- Dup $cntd, $mode, $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " >> /home/pi-star/netlog.log 
+	echo " -- Dup $cntd, $mode, $dt1, $Time, $call, $name, $city, $state, $country, $dur sec $server $tg " >> /home/pi-star/netlog.log 
 }
 
 
@@ -300,9 +300,12 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
 	if [ "$pmode" == "DMRA" ] || [ "$pmode" == "YSFA" ] || [ "$pmode" == "P25A" ] || [ "$pmode" == "NXDNA" ]; then
                 fdate=$(echo "$nline1" | cut -d " " -f2)
 		amode="yes"
-		textstr=$(echo -en " ${YELLOW}   Active $mode QSO $Time from $call $name, $state, $country, $server : $tg ${ENDCOLOR}")
+		textstr=$(echo -en " ${YELLOW}   Active $mode QSO $dt1 $Time from $call $name, $city, $state, $country, $server : $tg ${ENDCOLOR}")
 		echo "$textstr"
 		echo -en "\033[1A\033"
+		ber=0
+		pl=0
+		dur=0
 		sudo mount -o remount,rw / 
 
 echo "ProcessNewCall Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
@@ -316,11 +319,11 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 			sudo mount -o remount,rw /
 
 			if [ "$rf" == 1 ]; then
-				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name BER:$ber  $tg,   $server ${ENDCOLOR}\n"
+				printf " ${LTMAG}-------------------- $mode $dt1 $Time  Net Control $netcont $name BER:$ber  $tg,   $server ${ENDCOLOR}\n"
 			else
-				printf " ${LTMAG}-------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt sec,  $tg,   $server ${ENDCOLOR}\n"
+				printf " ${LTMAG}-------------------- $mode $dt1 $Time  Net Control $netcont $name, $city, $state, $country, $durt sec,  $tg,   $server ${ENDCOLOR}\n"
 			fi	
-			echo " --------------------- $mode $Time  Net Control $netcont $name, $city, $state, $country, $durt secy  \n" >> /home/pi-star/netlog.log 
+			echo " --------------------- $mode $dt1 $Time  Net Control $netcont $name, $city, $state, $country, $durt secy  \n" >> /home/pi-star/netlog.log 
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
@@ -337,7 +340,7 @@ echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt 
 
 					if [ "$callstat" == "New" ]; then
 						cnt=$((cnt+1))
-printf "${LTCYAN} %-3s $mode New KeyUp %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s ${ENDCOLOR} \n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg "
+printf "${LTCYAN} %-3s $mode New KeyUp %s %-8s -- %-6s %s, %s, %s, %s, %s, %s, TG:%s  %s ${ENDCOLOR} \n" "$cnt" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg "
 						Logit
 sudo mount -o remount,rw / 
 
@@ -352,12 +355,12 @@ echo "ProcessNewCall Loged New Key Up" | tee -a /home/pi-star/netlog_debug.txt >
 						cnt2d=$(echo "$cnt2ds" | cut -d "," -f 1)
 
 printf "${LTGREEN}%s SKU Dup" "$mode"
-printf " %-4s %-8s %-6s " "$cnt2d" "$Time" "$call" 
+printf " %-4s %s %-8s %-6s " "$cnt2d" "$dt1" "$Time" "$call" 
 printf " %s, %s, %s, %s" "$name" "$city" "$state" "$country"
 printf " Dur:%s, Pl:%s, Svr:%s, TG:%s ${ENDCOLOR}\n" "$durt" "$pl" "$server" "$tg"
 
-#printf "${LTGREEN} %3s %4s %-8s %-6s %s, %s, %s, %s  %s, %s, %s, %s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
-#printf "${LTGREEN} %3s %4s %-8s %-6s %s, %s, %s, %s  %s, %s, %s, %s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+#printf "${LTGREEN} %3s %4s %s %-8s %-6s %s, %s, %s, %s  %s, %s, %s, %s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
+#printf "${LTGREEN} %3s %4s %-8s %-6s %s, %s, %s, %s  %s, %s, %s, %s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$dt1 $Time" "$call" "$name" "$city" "$state" "$country" "$durt" "$pl" "$server" "$tg"
 #printf "${LTGREEN} %3s %4s %-8s ${ENDCOLOR}\n" "$mode" "$cnt2d" "$Time" "$call"
 
 sudo mount -o remount,rw / 
@@ -376,9 +379,9 @@ echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev
 #						printf '\e[1;36m'
 
 					    	if [ "$kbd" == true ]; then
-printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
+printf "${LTCYAN} %-3s $mode New Call %s %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
 					    	else
-printf "${LTCYAN} %-3s $mode New Call  %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
+printf "${LTCYAN} %-3s $mode New Call %s %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$dt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
 					    	
 						fi
 						Logit
@@ -392,10 +395,10 @@ echo "ProcessNewCall Logged New Call " | tee -a /home/pi-star/netlog_debug.txt >
 
 				    		if [ "$kbd" == true ]; then
 		#
-printf "${LTGREEN}$mode KBd Dup %4s %-8s %-6s %s,%s, %s, %s %s %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
+printf "${LTGREEN}$mode KBd Dup %4s %s %-8s %-6s %s,%s, %s, %s %s %s${ENDCOLOR}\n" "$cnt2d" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg"	
 #printf "%s, %s, %s %s %s\n" "$city" "$state" "$country" "$server" "$tg"	
 					    	else
-printf "${LTGREEN}$mode Net Dup %-4s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${ENDCOLOR} \n" "$cnt2d" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
+printf "${LTGREEN}$mode Net Dup %-4s %s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${ENDCOLOR} \n" "$cnt2d" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 #printf "   %s, %s, %s %s %s \n" "$country" " Dur: $durt sec"  "PL: $pl" "$server" "$tg"	
 					    	fi
 #							printf '\e[0m'
@@ -425,11 +428,11 @@ sudo mount -o remount,rw /
 echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		if [ "$callstat" == "New" ]; then
 			cnt=$((cnt+1))
-			printf " ${LTCYAN} New %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			printf " ${LTCYAN} New %s %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt" "$dt1" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
 			Logit
 		fi 
 		if [ "$callstat" == "Dup" ]; then
-			printf "${LTGREEN} Dup %s  %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt2d" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			printf "${LTGREEN} Dup %s %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt2d" "$dt1" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
 		fi	
 	fi
 sudo mount -o remount,rw / 
@@ -663,6 +666,7 @@ echo "0" > /home/pi-star/Netlog/count.val
 fi
 
 
+
 if [ "$netcont" != "ReStart" ]; then
 
 	if [ "$netcont" == "HELP" ]; then
@@ -674,7 +678,7 @@ if [ "$netcont" != "ReStart" ]; then
 		## Delete and start a new data file starting with date line
 		dates=$(date '+%A %Y-%m-%d %T')
         	header 
-
+		
 	elif [ "$netcont" == "OLD" ] || [ "$stat" == "OLD" ] || [ ! -f /home/pi-star/netlog.log ]; then
 		## Delete and start a new data file starting with date line
 		dates=$(date '+%A %Y-%m-%d %T')
@@ -686,6 +690,10 @@ if [ "$netcont" != "ReStart" ]; then
 #			grep -v '^ --' /home/pi-star/netlog.log
    #             fi
 
+	elif [ "$netcont" != "NEW" ] && [ "$stat" == "NEW" ] || [ ! -f /home/pi-star/netlog.log ]; then
+		call="$netcont"
+		processnewcall
+
 	elif [ "$netcont" != "ReStart" ]; then
 #                        cat /home/pi-star/netlog.log 
 			grep -v '^ --' /home/pi-star/netlog.log
@@ -693,10 +701,6 @@ if [ "$netcont" != "ReStart" ]; then
 			cntt=$(cat ./count.val)
                 	cnt=$((cntt))
                         echo "Restart Program Ver:$ver - Counter = $cnt"
-   #             fi
-
-
-		
 	fi
 
 fi
@@ -717,6 +721,8 @@ while true
 do 
 kbd=false
 	cm=0	
+        dt1=$(date '+%m-%d')
+
  	Time=$(date '+%T')  
 	GetLastLine
 
