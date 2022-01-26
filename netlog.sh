@@ -13,8 +13,7 @@ set -e
 #set -o errtrace
 #set -E -o functrace
 
-ver=2022012014
-
+ver=2022012522
 
 sudo mount -o remount,rw / 
 #printf '\e[9;1t'
