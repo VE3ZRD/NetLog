@@ -380,7 +380,7 @@ echo "ProcessNewCall Keyup Dupe " | tee -a /home/pi-star/netlog_debug.txt > /dev
 					    	if [ "$kbd" == true ]; then
 printf "${LTCYAN} %-3s $mode New Call %s %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
 					    	else
-printf "${LTCYAN} %-3s $mode New Call %s %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$dt" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
+printf "${LTCYAN} %-3s $mode New Call %s %-8s -- %-6s %s, %s, %s, %s,  Dur:%s Secs, PL:%s, TG:%s %s${ENDCOLOR}\n" "$cnt" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" "$durt"  "$pl" "$server" "$tg "	
 					    	
 						fi
 						Logit
