@@ -422,9 +422,9 @@ echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.t
 
 #Watchdog loop
 	if [ "$pmode" == "Watchdog" ]; then
-sudo mount -o remount,rw / 
+		sudo mount -o remount,rw / 
 
-echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+		echo "ProcessNewCall Processing Watchdog Line " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		if [ "$callstat" == "New" ]; then
 			cnt=$((cnt+1))
 			printf " ${LTCYAN} New %s %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt" "$dt1" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
@@ -471,6 +471,14 @@ function ParseLineP25(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="P25T"
 		fi
+		if [[ "$nline1" =~ "watchdog" ]]; then
+					pl=$(echo "$nline1" | cut -d " " -f 11)
+					ber="0"
+					durt=$(echo "$nline1" | cut -d " " -f 9)
+					dur=$(printf "%1.0f\n" $durt)
+					pmode="Watchdog"
+		fi
+
 }
 
 function ParseLineYSF(){
@@ -500,6 +508,14 @@ function ParseLineYSF(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="YSFW"
 		fi
+		if [[ "$nline1" =~ "watchdog" ]]; then
+					pl=$(echo "$nline1" | cut -d " " -f 11)
+					ber="0"
+					durt=$(echo "$nline1" | cut -d " " -f 9)
+					dur=$(printf "%1.0f\n" $durt)
+					pmode="Watchdog"
+		fi
+
 }
 ################################################
 function ParseLineDMR(){
@@ -537,7 +553,7 @@ function ParseLineDMR(){
 				fi
 	else	
 
-			if [[ "$nline1" =~ "network voice header" ]]; then
+				if [[ "$nline1" =~ "network voice header" ]]; then
 					nmode="NET"
 					tg=$(echo "$nline1" | cut -d " " -f 15 | sed 's/,//g')
 					pl=0
@@ -556,7 +572,7 @@ function ParseLineDMR(){
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="DMRT"
 
-				fi	
+				fi
      	fi
 
 
@@ -564,14 +580,6 @@ function ParseLineDMR(){
 					pl=$(echo "$nline1" | cut -d " " -f 13)
 					ber=$(echo "$nline1" | cut -d " " -f 17)
 					durt=$(echo "$nline1" | cut -d " " -f 11)
-					dur=$(printf "%1.0f\n" $durt)
-					pmode="Watchdog"
-					cnt=$((cnt+1))
-		fi
-		if [[ "$nline1" =~ "watchdog" ]] && [ "$mode" == "P25" ]; then
-					pl=$(echo "$nline1" | cut -d " " -f 11)
-					ber="0"
-					durt=$(echo "$nline1" | cut -d " " -f 9)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="Watchdog"
 		fi
