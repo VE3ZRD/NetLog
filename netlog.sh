@@ -108,6 +108,19 @@ function getinput()
 	ProcessNewCall
 }
 
+function searchcall()
+{
+	calli=" "
+	echo -n "Type a Call Sign and press enter: ";
+	read calli
+	call=${calli^^} 
+	echo ""
+	stty sane
+	cm=2
+	keybd="yes"
+	cat /home/pi-star/netlog.log | grep "$call"
+}
+
 
 function help(){
 	#echo "Syntax : \./netlog.sh Param1 Param2 Param3"
@@ -273,7 +286,6 @@ echo "ProcessNewCall 1 $call " | tee -a /home/pi-star/netlog_debug.txt > /dev/nu
 	getuserinfo 
 	checkcall 
 #	getserver 
-
 	if [ "$mode" == "DMR" ]; then
 		getserver
         fi
@@ -310,7 +322,7 @@ echo "ProcessNewCall - got mode info " | tee -a /home/pi-star/netlog_debug.txt >
 echo "ProcessNewCall Active QSO $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 	fi
 
-   	if [  "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
+   	if [ "$pmode" == "DMRK" ] || [ "$pmode" == "DMRT" ] || [ "$pmode" == "YSFT" ] || [ "$pmode" == "P25T" ]  || [ "$pmode" == "NXDNT" ]; then
 		amode="no"
 sudo mount -o remount,rw / 
 echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
@@ -326,6 +338,7 @@ echo "ProcessNewCall Last Heard $pmode" | tee -a /home/pi-star/netlog_debug.txt 
 
 #			printf '\e[0m'
 sudo mount -o remount,rw / 
+
 echo "ProcessNewCall echo net control " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 		fi
 
@@ -437,7 +450,12 @@ echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.t
 sudo mount -o remount,rw / 
 
 echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
-	
+
+#if [ "$pmode" == "DMRK" ]; then
+#	printf "${LTCYAN} %-3s $mode New Call %s %-8s -- %-6s %s, %s, %s, %s, %s  KeyBd, TG:%s %s ${ENDCOLOR}\n" "$cnt" "$dt1" "$Time" "$call" "$name" "$city" "$state" "$country" "$server" "$tg "	
+#	Logit
+#
+#fi	
 }
 ################################
 function ParseLineNXDN(){
@@ -742,5 +760,14 @@ kbd=false
 		kbd=true
 		getinput
 	done
+	
+	IFS= read -rsn1 input
+	if [ "$input" == "s" ]; then
+		searchcall
+	fi
+	if [ "$input" == "i" ]; then
+		kbd=true
+		getinput
+	fi
 done
 echo "No Longer True"
