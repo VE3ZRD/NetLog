@@ -98,7 +98,7 @@ trap fnEXIT SIGINT SIGTERM
 function getinput()
 {
 	calli=" "
-	echo -n "Type a Call Sign and press enter: ";
+	echo -n "Type a Call Sign and press enter: "
 	read calli
 	call=${calli^^} 
 	echo ""
@@ -111,7 +111,8 @@ function getinput()
 function searchcall()
 {
 	calli=" "
-	echo -n "Type a Call Sign and press enter: ";
+	tput el1
+	echo -n "Type a Call Sign and press enter: "
 	read calli
 	call=${calli^^} 
 	echo ""
@@ -745,29 +746,42 @@ callstat=""
 while true
 do 
 kbd=false
+
+	sync
+#	sleep 1.0
+
+	while read -t0.5 -n1 k  
+  	do 
+	    	if [ "$k" == "s" ]; then
+        		searchcall
+    		else
+			kbd=true
+			getinput
+		fi
+	done
+#while true; do
+#    read -res -t0.5 -n1 input > /dev/null
+#    read -res input  > /dev/null
+
+#    if [ "$input" == "s" ]; then
+#        searchcall
+#    fi
+#    if [ "$input" == "i" ]; then
+#		kbd=true
+#		getinput
+ #   fi
+
 	cm=0	
         dt1=$(date '+%m-%d')
 
  	Time=$(date '+%T')  
 	GetLastLine
+done
 
-
-#	sync
-#	sleep 1.0
-
-	while read -t1  
-  	do 
-		kbd=true
-		getinput
-	done
 	
-	IFS= read -rsn1 input
-	if [ "$input" == "s" ]; then
-		searchcall
-	fi
-	if [ "$input" == "i" ]; then
-		kbd=true
-		getinput
-	fi
+
+
+
+
 done
 echo "No Longer True"
