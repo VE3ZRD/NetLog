@@ -41,7 +41,7 @@ if [ "$P3" ]; then
 	P3S=${P3^^} 
 fi
 
-TG=""
+TG="NA"
 #echo "$netcont"   "$stat" 
 dur=$((0)) 
 cnt=$((0)) 
@@ -416,11 +416,11 @@ printf "${LTGREEN}$mode Net Dup %-4s %s %-8s %-6s %s, %s, %s, %s, %s, %s %s %s${
 					    	fi
 #							printf '\e[0m'
 #						fi
-sudo mount -o remount,rw / 
-LogDup
-echo "ProcessNewCall echo Duplicate Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+	sudo mount -o remount,rw / 
+	LogDup
+	echo "ProcessNewCall echo Duplicate Call " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 					fi
-printf "${ENDCOLOR}"
+	printf "${ENDCOLOR}"
 			
 				fi  # end of keyup loop
 		fi  #end of not netcont loop
@@ -430,11 +430,11 @@ printf "${ENDCOLOR}"
 		fi
 		lcm=0
 	fi
-sudo mount -o remount,rw / 
+	sudo mount -o remount,rw / 
 
-echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
+	echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
-#Watchdog loop
+	#Watchdog loop
 	if [ "$pmode" == "Watchdog" ]; then
 		sudo mount -o remount,rw / 
 
@@ -446,9 +446,10 @@ echo "ProcessNewCall End of Regular Data " | tee -a /home/pi-star/netlog_debug.t
 		fi 
 		if [ "$callstat" == "Dup" ]; then
 			printf "${LTGREEN} Dup %s %s %-15s - $mode Network Watchdog Timer has Expired for %-6s %s, %s, %s, %s, %s${ENDCOLOR}\n" "$cnt2d" "$dt1" "$Time" "$call" "$name" "Dur: $durt sec"  "PL: $pl"	
+			LogDup
 		fi	
 	fi
-sudo mount -o remount,rw / 
+	sudo mount -o remount,rw / 
 
 echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 
@@ -541,7 +542,7 @@ function ParseLineDMR(){
 
 	
 #	echo " Last Line : $nline1"
-	tg=""
+	tg="NA"
 	sudo mount -o remount,rw / 
 
 	echo "ParseLine getting date/time " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
@@ -612,6 +613,13 @@ function GetLastLine(){
 	nline1=$(tail -n 1 "$f1" | tr -s \ )
 	tcall=$(echo "$nline1" |  grep -oP '(?<=from )\w+(?= to)' | tr "/" " " | tr "-" " ")
 	clen=$(echo $tcall | wc -c)
+	
+	tg="NA"
+	ber=0
+	pl=0
+	durt=""
+	dur=0
+	pmode="DMRA"
 
 	if [[ "$nline1" =~ "from" ]] && [ "$clen" -ge 4 ] && [ "$clen" -le 7 ]; then
 		ok=true
@@ -746,12 +754,14 @@ callstat=""
 while true
 do 
 kbd=false
+sudo mount -o remount,rw / 
 
 	sync
 #	sleep 1.0
 
 	while read -t0.5 -n1 k  
   	do 
+#echo -e $k | hexdump -C
 	    	if [ "$k" == "s" ]; then
         		searchcall
     		else
@@ -774,8 +784,8 @@ kbd=false
 	cm=0	
         dt1=$(date '+%m-%d')
 
- 	Time=$(date '+%T')  
-	GetLastLine
+ 	Time=$(date '+%T') 
+	GetLastLine 
 done
 
 	
