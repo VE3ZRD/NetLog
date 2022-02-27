@@ -482,12 +482,28 @@ function ParseLineP25(){
 					tg=$(echo "$nline1" | cut -d " " -f 12)
 					pmode="P25A"
 		fi
+		if [[ "$nline1" =~ "received RF voice" ]]; then
+					call=$(echo "$nline1" | cut -d " " -f 10)
+					tg=$(echo "$nline1" | cut -d " " -f 13)
+					pmode="P25A"
+		fi
 		if [[ "$nline1" =~ "end of transmission" ]]; then
 					call=$(echo "$nline1" | cut -d " " -f 10)
 					tg=$(echo "$nline1" | cut -d " " -f 13)
 					pl=$(echo "$nline1" | cut -d " " -f 16)
 					ber=$(echo "$nline1" | cut -d " " -f 23)
 					durt=$(echo "$nline1" | cut -d " " -f 14)
+					dur=$(printf "%1.0f\n" $durt)
+					pmode="P25T"
+		fi
+		
+		##RF
+		if [[ "$nline1" =~ "end of voice transmission" ]]; then
+					call=$(echo "$nline1" | cut -d " " -f 12)
+					tg=$(echo "$nline1" | cut -d " " -f 15)
+					pl=0
+					ber=$(echo "$nline1" | cut -d " " -f 19)
+					durt=$(echo "$nline1" | cut -d " " -f 16)
 					dur=$(printf "%1.0f\n" $durt)
 					pmode="P25T"
 		fi
