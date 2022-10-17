@@ -315,7 +315,7 @@ ENDCOLOR="\e[0m"
 ###		echo -en "\033[1A\033"
 		ber=0
 		pl=0
-		dur=0
+#		dur=0
 		sudo mount -o remount,rw / 
 
 		echo "ProcessNewCall Active QSO $mode" | tee -a /home/pi-star/netlog_debug.txt > /dev/null
@@ -460,17 +460,38 @@ echo "ProcessNewCall End " | tee -a /home/pi-star/netlog_debug.txt > /dev/null
 }
 ################################
 function ParseLine(){
+	if [[ $LastLine == *"voice header from"* ]]; then 	
+                if [ "$RFMode" == "RF-" ]; then
+                        tg=$(echo "$LastLine" | grep -o "TG.*" | cut -d " " -f2 | tr -d ",")
+                        dur=0
+                        ber=0
+                        pl=0
+
+       		else
+                        tg=$(echo "$LastLine" | grep -o "TG.*" | cut -d " " -f2 | tr -d ",")
+                        dur=0
+                        ber=0
+                        pl=0
+		fi
+	fi
+
+	if [[ $LastLine == *"end of voice transmission"* ]]; then 	
+
+	## End of of Transmission
                 if [ "$RFMode" == "RF-" ]; then
                         tg=$(echo "$LastLine" | grep -o "TG.*" | cut -d " " -f2 | tr -d ",")
                         dur=$(echo "$LastLine" | grep -o "TG.*" | cut -d " " -f3)
                         ber=$(echo "$LastLine" | grep -o "BER:.*" | cut -d " " -f2)
+		         echo "RF - EOT"
                         pl=0
                 else
                         tg=$(echo "$LastLine" | grep -o "TG.*" | cut -d " " -f2 | tr -d ",")
                         dur=$(echo "$LastLine" | grep -o "TG.*" | cut -d " " -f3)
-                        ber=$(echo "$LastLine" | grep -o "BER:.*" | cut -d " " -f2)
+                        ber=0
                         pl=$(echo "$LastLine" | grep -o "seconds.*" | cut -d " " -f2)
-                fi
+		fi
+	fi
+durt="$dur"
 ProcessNewCall
 }
 
