@@ -13,7 +13,7 @@ set -e
 #set -o errtrace
 #set -E -o functrace
 
-ver=2022012522
+ver=2023092522
 
 sudo mount -o remount,rw / 
 #printf '\e[9;1t'
@@ -499,9 +499,7 @@ ProcessNewCall
 function GetLastLine(){
 	ok=false
 
-	LastLine=$(tail -n 1 /var/log/pi-star/MMDVM-2022* | tail -n 1)
-#M: 2022-08-20 19:17:59.426 DMR Slot 2, received network voice header from KV9Q to TG 14031665
-#M: 2022-08-20 19:18:04.444 DMR Slot 2, received network end of voice transmission from KV9Q to TG 14031665, 5.2 seconds, 0% packet loss, BER: 0.0%
+	LastLine=$(tail -n 1 /var/log/pi-star/MMDVM-20* | tail -n 1)
 
    if [ "$LastLine" != "$oldline" ]; then
 	cm=99
