@@ -554,10 +554,10 @@ function StartUp()
         newline="$nline1"
 	oldline="$nline1"
 
-if [ ! -f /home/pi-star/Netlog/count.val ]; then
+if [ ! -f /home/pi-star/NetLog/count.val ]; then
   
 sudo mount -o remount,rw / 
-echo "0" > /home/pi-star/Netlog/count.val
+echo "0" > /home/pi-star/NetLog/count.val
 fi
 
 
